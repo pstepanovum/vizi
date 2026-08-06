@@ -413,7 +413,51 @@ User Experience
 
 ---
 
-# 13. Hackathon Demo
+# 13. Market & Business Model
+
+**Market**
+- 340M blind or low vision
+- 15–30M reachable now
+- $4B+ category
+- ~14% growth
+
+**Who Pays**
+Not the user.
+- Venues
+- Employers
+- Agencies
+- Cities
+
+**The Wedge**
+Human eyes: ~$1/minute.
+
+Vizi: ~$0.05/minute.
+
+Same service.
+
+95% cheaper.
+
+**Pricing**
+Free (limited usage)
+→ Everyone
+
+Plus — $7.99/mo
+→ Power users
+
+Venue — $200–500 / location / mo
+
+Employer — $300–500 / employee / yr
+
+Agency — $299–499 / user / yr
+
+City — $1–3k / intersection / yr
+
+**One-liner**
+Users pay nothing.
+
+The institutions already funding visual interpreting pay us — at a tenth of the cost.
+
+# 14. Hackathon Demo
 
 Scenario 1
 
@@ -455,7 +499,7 @@ AI provides a detailed environmental summary.
 
 ---
 
-# 14. Future Roadmap
+# 15. Future Roadmap
 
 ## Phase 2
 
@@ -487,7 +531,7 @@ AI provides a detailed environmental summary.
 
 ---
 
-# 15. Product Principles
+# 16. Product Principles
 
 Vizi should always be:
 
@@ -504,7 +548,7 @@ They should feel like they are talking to a companion that helps them understand
 
 ---
 
-# 16. Mission Statement
+# 17. Mission Statement
 
 Technology should not create barriers—it should remove them.
 
