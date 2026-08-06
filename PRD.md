@@ -354,14 +354,6 @@ Launch App
 
 ↓
 
-Home Screen
-
-↓
-
-Tap "Start"
-
-↓
-
 Live Camera
 
 ↓
