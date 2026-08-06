@@ -33,6 +33,13 @@ npm install
 npx expo start
 ```
 
+> **Fonts:** licensed font files are not committed. Before the first build, copy the
+> Chunk font into the app (get `vizi-assets/font/` from a teammate if missing):
+>
+> ```bash
+> cp vizi-assets/font/chunk-font/Chunk.otf vizi-mobile/assets/fonts/chunk.otf
+> ```
+
 For device/simulator with native modules:
 
 ```bash
