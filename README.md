@@ -21,7 +21,7 @@ AI vision companion — point your phone, ask naturally, get spoken answers.
 
 - Node.js 20+ (LTS recommended)
 - Xcode (iOS) and/or Android Studio
-- [EAS CLI](https://docs.expo.dev/eas/) for development builds (`npx eas-cli`)
+- Builds are **local only** (Xcode / `npx expo run:ios`) — EAS cloud builds are not used
 
 Native modules (Firebase, camera, etc.) require a **development build** — Expo Go is not sufficient for the full app.
 
@@ -48,6 +48,20 @@ npx expo run:ios
 # or
 npx expo run:android
 ```
+
+## TestFlight (local, no EAS)
+
+Archive, sign, and upload with one script (uses the App Store Connect API key
+from `vizi-assets/apple/`, automatic signing via Xcode):
+
+```bash
+cd vizi-mobile
+ASC_ISSUER_ID=<issuer-uuid> ./scripts/testflight-ios.sh
+```
+
+The Issuer ID is in App Store Connect → Users and Access → Integrations.
+Bump `ios.buildNumber` in `app.json` before each upload. Alternatively use
+Xcode: Product → Archive → Distribute App.
 
 ## Product invariants
 

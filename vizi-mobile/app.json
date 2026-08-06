@@ -10,6 +10,7 @@
     "backgroundColor": "#F2EAE0",
     "ios": {
       "bundleIdentifier": "com.vizi.mobile.app",
+      "buildNumber": "1",
       "googleServicesFile": "./google-services/GoogleService-Info.plist",
       "supportsTablet": false,
       "infoPlist": {
