@@ -1,44 +1,16 @@
-Service Key: vizi-assets/firebase/vizi-mobile-firebase-adminsdk-fbsvc-2e4a93f587.json
+# Firebase
 
+**Project ID:** `vizi-mobile`
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+## Client config
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBx3Zpu632j4oMEM2-Nof06-e3WMv8_sqc",
-  authDomain: "vizi-mobile.firebaseapp.com",
-  projectId: "vizi-mobile",
-  storageBucket: "vizi-mobile.firebasestorage.app",
-  messagingSenderId: "463129827015",
-  appId: "1:463129827015:web:97f46788957a07e4dc50e2",
-  measurementId: "G-E115JPMNCW"
-};
+Do **not** commit API keys or plist/json into markdown.
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+- iOS: place `GoogleService-Info.plist` where `vizi-mobile/app.json` expects (`./google-services/GoogleService-Info.plist`) — gitignored at repo root patterns.
+- Android: use the matching `google-services.json` via the same local/google-services workflow.
+- Prefer EAS Secrets / `.env` for any web SDK keys if needed.
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBx3Zpu632j4oMEM2-Nof06-e3WMv8_sqc",
-  authDomain: "vizi-mobile.firebaseapp.com",
-  projectId: "vizi-mobile",
-  storageBucket: "vizi-mobile.firebasestorage.app",
-  messagingSenderId: "463129827015",
-  appId: "1:463129827015:web:97f46788957a07e4dc50e2",
-  measurementId: "G-E115JPMNCW"
-};
+## Admin SDK
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+Place the Firebase Admin service-account JSON locally under this folder.  
+Filename pattern `*adminsdk*.json` is **gitignored**. Never paste the JSON into docs or source.

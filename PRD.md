@@ -1,11 +1,9 @@
-# PDR.md
-
 # Vizi — AI Vision Companion
 
-**Product Design Requirements (PDR)**
+**Product Design Requirements (PRD)**
 
-**Version:** 1.0  
-**Platform:** iOS (Hackathon MVP)  
+**Version:** 1.1  
+**Platform:** iOS + Android (Hackathon MVP via Expo)  
 **Author:** Team Vizi
 
 ---
@@ -323,36 +321,40 @@ No unnecessary data collection.
 
 ## Mobile
 
-- SwiftUI
-- AVFoundation
+- Expo (React Native) — iOS + Android
+- Expo Router
+- Live camera stream (continuous analysis; no manual photo capture)
+- See [TECH_SPEC.md](./TECH_SPEC.md) for implementation detail
 
 ---
 
 ## AI
 
 - Google Gemini
-- Gemini Live API
+- Gemini Live API (primary multimodal voice + vision session)
 
 ---
 
 ## Voice
 
-- Deepgram STT
-- Deepgram TTS
+- Primary: Gemini Live native audio (in + out)
+- Fallback: OS-native STT/TTS (iOS Speech / Android SpeechRecognizer + platform TTS)
+- Deepgram is **not** used
 
 ---
 
 ## Backend
 
-- Cloud Run
-- Firebase
-- Cloud Functions
+- Cloud Run and/or Cloud Functions (ephemeral Gemini tokens, rate limits)
+- Firebase (Auth, Analytics; optional)
 
 ---
 
 ## Storage
 
 Temporary cloud processing only.
+
+No durable image or audio retention by default.
 
 ---
 
@@ -362,7 +364,7 @@ Launch App
 
 ↓
 
-Live Camera
+Live Camera (opens immediately)
 
 ↓
 
@@ -370,23 +372,11 @@ User Speaks
 
 ↓
 
-Speech → Text
+Gemini Live (audio + auto-sampled camera frames)
 
 ↓
 
-Gemini Vision Analysis
-
-↓
-
-AI Response
-
-↓
-
-Deepgram TTS
-
-↓
-
-User Hears Response
+Spoken AI Response
 
 ↓
 
@@ -407,7 +397,7 @@ Technical
 User Experience
 
 - Zero learning curve
-- One-button interaction
+- Launch → camera (no Start gate)
 - Natural conversation
 - High accessibility score
 
