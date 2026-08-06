@@ -493,6 +493,7 @@ AI provides a detailed environmental summary.
 
 ## Phase 2
 
+- B2B and B2G pricing
 - Indoor navigation
 - Outdoor navigation
 - Smart reminders
