@@ -10,7 +10,8 @@ Onboarding for any agent (or human) working in this repository.
 
 1. [`PRD.md`](./PRD.md) — product requirements (single source of truth; **do not** add `vizi-mobile/PRD.md`)
 2. [`TECH_SPEC.md`](./TECH_SPEC.md) — Expo implementation spec
-3. [`README.md`](./README.md) — how to run the app
+3. [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) — phased build plan + checklist
+4. [`README.md`](./README.md) — how to run the app
 
 ## Repo map
 
