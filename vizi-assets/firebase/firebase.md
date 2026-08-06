@@ -1,4 +1,4 @@
-Service Key: vizi-asets/firebase/vizi-mobile-firebase-adminsdk-fbsvc-2e4a93f587.json
+Service Key: vizi-assets/firebase/vizi-mobile-firebase-adminsdk-fbsvc-2e4a93f587.json
 
 
 // Import the functions you need from the SDKs you need

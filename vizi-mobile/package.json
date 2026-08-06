@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/ui": "~57.0.9",
     "@react-native-firebase/analytics": "^26.1.0",
     "@react-native-firebase/app": "^26.1.0",

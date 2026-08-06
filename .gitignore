@@ -2,11 +2,17 @@
 .DS_Store
 
 # Secrets — never commit credentials
-vizi-asets/apple/*.p8
-vizi-asets/firebase/*adminsdk*.json
+vizi-assets/apple/*.p8
+vizi-assets/firebase/*adminsdk*.json
 **/GoogleService-Info.plist
+.env
+.env.*
 
-# Node
+# Fonts — licensed assets stay local
+vizi-assets/font/
+vizi-mobile/assets/fonts/
+
+# Dependencies
 node_modules/
 
 # Expo
@@ -15,14 +21,9 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native build artifacts
-vizi-mobile/ios/Pods/
-vizi-mobile/ios/build/
-vizi-mobile/android/build/
-vizi-mobile/android/app/build/
-vizi-mobile/android/.gradle/
-*.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/
+# Native projects are generated with `expo prebuild`
+vizi-mobile/ios/
+vizi-mobile/android/
 
 # Metro
 .metro-health-check*
@@ -32,6 +33,5 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# Env
-.env
-.env.*
+# TypeScript
+*.tsbuildinfo

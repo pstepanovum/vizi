@@ -1,8 +1,8 @@
-import { Platform } from 'react-native';
-
 export const fonts = {
   brand: 'Chunk',
-  body: Platform.select({ ios: 'System', default: 'sans-serif' }) as string,
+  regular: 'Poppins_400Regular',
+  medium: 'Poppins_500Medium',
+  semibold: 'Poppins_600SemiBold',
 } as const;
 
 export const typography = {
@@ -16,18 +16,17 @@ export const typography = {
     fontSize: 22,
   },
   body: {
-    fontFamily: fonts.body,
-    fontSize: 17,
+    fontFamily: fonts.regular,
+    fontSize: 16,
     lineHeight: 24,
   },
   button: {
-    fontFamily: fonts.body,
-    fontSize: 19,
-    fontWeight: '600' as const,
+    fontFamily: fonts.semibold,
+    fontSize: 18,
   },
   caption: {
-    fontFamily: fonts.body,
-    fontSize: 14,
+    fontFamily: fonts.regular,
+    fontSize: 13,
     lineHeight: 20,
   },
 } as const;
