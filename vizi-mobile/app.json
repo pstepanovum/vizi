@@ -59,11 +59,12 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "dynamic"
+            "useFrameworks": "static"
           }
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "./plugins/with-firebase-cocoapods.js"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -4,6 +4,7 @@
 # Secrets — never commit credentials
 vizi-assets/apple/*.p8
 vizi-assets/firebase/*adminsdk*.json
+vizi-assets/firebase/*.zip
 **/GoogleService-Info.plist
 .env
 .env.*
