@@ -92,10 +92,6 @@ Launch App
 
 ↓
 
-Tap "Start"
-
-↓
-
 Camera opens
 
 ↓
