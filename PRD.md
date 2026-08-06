@@ -36,7 +36,15 @@ The AI analyzes the live camera feed and responds naturally using a real-time vo
 
 # 2. Problem Statement
 
-More than **2.2 billion people** worldwide live with some form of vision impairment.
+340 million people are blind or have low vision.
+
+Their options today:
+
+Free apps → limited
+Human interpreters → high $/minute
+Hardware → hundreds to thousands
+
+Independence costs real dollars a minute.
 
 Existing assistive technologies often suffer from one or more of the following:
 
