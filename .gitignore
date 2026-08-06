@@ -1,0 +1,37 @@
+# macOS
+.DS_Store
+
+# Secrets — never commit credentials
+vizi-asets/apple/*.p8
+vizi-asets/firebase/*adminsdk*.json
+**/GoogleService-Info.plist
+
+# Node
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native build artifacts
+vizi-mobile/ios/Pods/
+vizi-mobile/ios/build/
+vizi-mobile/android/build/
+vizi-mobile/android/app/build/
+vizi-mobile/android/.gradle/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Metro
+.metro-health-check*
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Env
+.env
+.env.*

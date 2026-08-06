@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "Vizi",
+    "slug": "vizi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "vizi",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F2EAE0",
+    "ios": {
+      "bundleIdentifier": "com.vizi.mobile.app",
+      "googleServicesFile": "./google-services/GoogleService-Info.plist",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Vizi uses the camera to see and describe the world around you.",
+        "NSMicrophoneUsageDescription": "Vizi uses the microphone so you can talk to your assistant.",
+        "NSSpeechRecognitionUsageDescription": "Vizi converts your speech to text to understand your questions.",
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.vizi.mobile.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#F2EAE0",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F2EAE0",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Vizi uses the camera to see and describe the world around you.",
+          "microphonePermission": "Vizi uses the microphone so you can talk to your assistant."
+        }
+      ],
+      "expo-audio",
+      "expo-video",
+      "expo-font",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/analytics",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "dynamic"
+          }
+        }
+      ],
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
