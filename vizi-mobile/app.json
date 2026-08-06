@@ -23,6 +23,7 @@
     },
     "android": {
       "package": "com.vizi.mobile.app",
+      "googleServicesFile": "./google-services/google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#F2EAE0",
         "foregroundImage": "./assets/icon.png"
@@ -37,6 +38,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-dev-client",
       [
         "expo-splash-screen",
         {
@@ -55,6 +57,7 @@
       "expo-audio",
       "expo-video",
       "expo-font",
+      "expo-speech-recognition",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/analytics",
@@ -77,7 +80,9 @@
       "router": {},
       "eas": {
         "projectId": "3f320cf8-c28c-482a-92d5-f35b44354702"
-      }
+      },
+      "geminiModel": "gemini-2.5-flash-native-audio-preview-12-2025",
+      "companionMode": "auto"
     },
     "owner": "patepanov"
   }

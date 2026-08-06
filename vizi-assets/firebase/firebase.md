@@ -1,16 +1,28 @@
 # Firebase
 
-**Project ID:** `vizi-mobile`
+**Project ID:** `vizi-mobile`  
+**iOS bundle ID:** `com.vizi.mobile.app`
 
-## Client config
+## Client config (local only — gitignored)
 
-Do **not** commit API keys or plist/json into markdown.
+Copy from your Firebase console / secure share into:
 
-- iOS: place `GoogleService-Info.plist` where `vizi-mobile/app.json` expects (`./google-services/GoogleService-Info.plist`) — gitignored at repo root patterns.
-- Android: use the matching `google-services.json` via the same local/google-services workflow.
-- Prefer EAS Secrets / `.env` for any web SDK keys if needed.
+| File | Path |
+|---|---|
+| iOS | `vizi-mobile/google-services/GoogleService-Info.plist` |
+| Android | `vizi-mobile/google-services/google-services.json` |
 
-## Admin SDK
+`app.json` points at those paths and enables `@react-native-firebase/app`, `auth`, and `analytics`.
 
-Place the Firebase Admin service-account JSON locally under this folder.  
-Filename pattern `*adminsdk*.json` is **gitignored**. Never paste the JSON into docs or source.
+## Admin SDK (local only — gitignored)
+
+Place the service-account JSON in this folder. Pattern `*adminsdk*.json` is ignored by git.
+
+## Setup checklist
+
+1. Copy plist/json into `vizi-mobile/google-services/`
+2. Copy admin SDK JSON here (optional, server tools only)
+3. Confirm `git status` does **not** list those credential files
+4. `npx expo prebuild` / `npx expo run:ios` as usual
+
+Never paste API keys, private keys, or plist/json contents into markdown or source.

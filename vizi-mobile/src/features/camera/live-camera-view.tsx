@@ -1,12 +1,27 @@
-import { CameraView as ExpoCameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView as ExpoCameraView, useCameraPermissions, type CameraView } from 'expo-camera';
+import { forwardRef, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { CameraFrame } from '@/components/camera-frame';
 import { RoundedButton } from '@/components/rounded-button';
 import { colors, radius, spacing, typography } from '@/theme';
 
-export function CameraView() {
+type Props = {
+  onPermissionChange?: (granted: boolean) => void;
+};
+
+export const LiveCameraView = forwardRef<CameraView, Props>(function LiveCameraView(
+  { onPermissionChange },
+  ref,
+) {
   const [permission, requestPermission] = useCameraPermissions();
+
+  useEffect(() => {
+    if (!permission) {
+      return;
+    }
+    onPermissionChange?.(permission.granted);
+  }, [permission, onPermissionChange]);
 
   if (!permission) {
     return <CameraFrame />;
@@ -18,17 +33,23 @@ export function CameraView() {
         <Text style={styles.permissionText}>
           Vizi needs the camera to see and describe the world around you.
         </Text>
-        <RoundedButton label="Enable Camera" onPress={requestPermission} />
+        <RoundedButton label="Enable Camera" onPress={() => void requestPermission()} />
       </View>
     );
   }
 
   return (
     <CameraFrame>
-      <ExpoCameraView style={styles.camera} facing="back" />
+      <ExpoCameraView
+        ref={ref}
+        style={styles.camera}
+        facing="back"
+        mode="picture"
+        animateShutter={false}
+      />
     </CameraFrame>
   );
-}
+});
 
 const styles = StyleSheet.create({
   camera: {

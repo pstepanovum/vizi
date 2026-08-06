@@ -6,6 +6,9 @@ vizi-assets/apple/*.p8
 vizi-assets/firebase/*adminsdk*.json
 vizi-assets/firebase/*.zip
 **/GoogleService-Info.plist
+**/google-services.json
+vizi-mobile/google-services/*
+!vizi-mobile/google-services/README.md
 .env
 .env.*
 

@@ -4,30 +4,29 @@ import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
-import { CameraView } from '@/features/camera/camera-view';
+import { LiveCameraView } from '@/features/camera/live-camera-view';
 import { SessionStatusBar } from '@/features/session/session-status-bar';
-import {
-  SessionStatus,
-  statusAnnouncement,
-} from '@/features/session/session-status';
+import { statusAnnouncement } from '@/features/session/session-status';
+import { useSessionController } from '@/features/session/use-session-controller';
 import { colors, spacing, typography } from '@/theme';
 
 export default function SessionScreen() {
   const [permission] = useCameraPermissions();
-  const [muted, setMuted] = useState(false);
-  const [status, setStatus] = useState<SessionStatus>('connecting');
+  const [cameraGranted, setCameraGranted] = useState(false);
+  const {
+    cameraRef,
+    status,
+    muted,
+    caption,
+    mode,
+    toggleMute,
+    repeatLast,
+    reconnect,
+  } = useSessionController(cameraGranted);
 
   useEffect(() => {
-    if (!permission) {
-      return;
-    }
-    if (!permission.granted) {
-      setStatus('needs_permission');
-      return;
-    }
-    // Gemini Live connects in a later phase — present listening UX immediately.
-    setStatus('listening');
-  }, [permission]);
+    setCameraGranted(Boolean(permission?.granted));
+  }, [permission?.granted]);
 
   useEffect(() => {
     if (status === 'connecting') {
@@ -43,34 +42,36 @@ export default function SessionScreen() {
           Vizi
         </Text>
         <SessionStatusBar status={status} muted={muted} />
+        {mode === 'mock' ? (
+          <Text style={styles.modeHint}>Mock companion (set EXPO_PUBLIC_GEMINI_API_KEY for Live)</Text>
+        ) : null}
       </View>
 
-      <CameraView />
+      <LiveCameraView
+        ref={cameraRef}
+        onPermissionChange={setCameraGranted}
+      />
+
+      {caption ? (
+        <Text accessibilityLiveRegion="polite" style={styles.caption}>
+          {caption}
+        </Text>
+      ) : null}
 
       <View style={styles.footer}>
         <RoundedButton
           label={muted ? 'Unmute microphone' : 'Mute microphone'}
           variant="neutral"
-          onPress={() => setMuted((value) => !value)}
+          onPress={toggleMute}
           style={styles.footerButton}
         />
         <RoundedButton
           label="Repeat last answer"
           variant="neutral"
-          onPress={() => {
-            // Wired when TTS / Live playback exists.
-          }}
+          onPress={repeatLast}
           style={styles.footerButton}
         />
-        <RoundedButton
-          label="Reconnect"
-          onPress={() => {
-            setStatus('connecting');
-            requestAnimationFrame(() => {
-              setStatus(permission?.granted ? 'listening' : 'needs_permission');
-            });
-          }}
-        />
+        <RoundedButton label="Reconnect" onPress={reconnect} />
       </View>
     </Screen>
   );
@@ -85,6 +86,17 @@ const styles = StyleSheet.create({
   wordmark: {
     ...typography.brand,
     color: colors.text,
+  },
+  modeHint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  caption: {
+    ...typography.body,
+    color: colors.text,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
   footer: {
     paddingTop: spacing.lg,
