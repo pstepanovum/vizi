@@ -44,7 +44,8 @@ export async function identifyPurchaser(firebaseUid: string | null) {
     if (firebaseUid) {
       await Purchases.logIn(firebaseUid);
       console.log(`[vizi:purchases] identified as ${firebaseUid}`);
-    } else {
+    } else if (!(await Purchases.isAnonymous())) {
+      // logOut throws if the purchaser is already anonymous.
       await Purchases.logOut();
       console.log('[vizi:purchases] anonymous purchaser');
     }
