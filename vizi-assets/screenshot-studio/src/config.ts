@@ -125,8 +125,8 @@ export const DEFAULT_CONFIG: StudioConfig = {
       'Premium natural voice',
     ],
     pricing: [
-      { label: 'Yearly', price: '$29.99' },
-      { label: 'Monthly', price: '$4.99' },
+      { label: 'Yearly', price: '$49.99' },
+      { label: 'Monthly', price: '$6.99' },
     ],
   },
 };

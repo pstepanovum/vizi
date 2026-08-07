@@ -5,7 +5,7 @@
       "caption": "See the world through conversation",
       "screen": "session",
       "scene": "street.jpg",
-      "status": "Listening…",
+      "status": "Listening\u2026",
       "showChat": false,
       "transcript": []
     },
@@ -14,7 +14,7 @@
       "caption": "Just point and ask",
       "screen": "session",
       "scene": "kitchen.jpg",
-      "status": "Speaking…",
+      "status": "Speaking\u2026",
       "showChat": true,
       "transcript": [
         {
@@ -32,7 +32,7 @@
       "caption": "Read anything out loud",
       "screen": "session",
       "scene": "menu.jpg",
-      "status": "Speaking…",
+      "status": "Speaking\u2026",
       "showChat": true,
       "transcript": [
         {
@@ -50,7 +50,7 @@
       "caption": "Know the colors",
       "screen": "session",
       "scene": "clothes.jpg",
-      "status": "Speaking…",
+      "status": "Speaking\u2026",
       "showChat": true,
       "transcript": [
         {
@@ -84,11 +84,11 @@
     "pricing": [
       {
         "label": "Yearly",
-        "price": "$29.99"
+        "price": "$49.99"
       },
       {
         "label": "Monthly",
-        "price": "$4.99"
+        "price": "$6.99"
       }
     ]
   }
