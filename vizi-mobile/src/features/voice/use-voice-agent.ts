@@ -108,14 +108,32 @@ function transcriptDelta(base: string, full: string): string {
   const baseWords = normalizeSpeech(base).split(' ').filter(Boolean);
   const fullNorm = normalizeSpeech(full).split(' ').filter(Boolean);
   const fullRaw = full.split(/\s+/).filter(Boolean);
-  if (
-    fullNorm.length >= baseWords.length &&
-    baseWords.every((word, i) => fullNorm[i] === word)
-  ) {
+  if (fullNorm.length >= baseWords.length) {
+    // Slice by consumed word count. Even when iOS revises an earlier word
+    // (breaking exact prefix match), the count of already-consumed words is
+    // stable — never replay the full transcript, that loops old speech.
     return fullRaw.slice(baseWords.length).join(' ').trim();
   }
-  // Recognizer revised earlier words — fall back to treating it all as new.
+  // Transcript got shorter than what was consumed — treat it all as new.
   return full.trim();
+}
+
+// Echo often rides on the END of a real utterance (the recognizer appends
+// Vizi's first words to the user's sentence). Trim any suffix of `text` that
+// matches a leading chunk of what Vizi said.
+function trimEchoSuffix(text: string, spokenText: string): string {
+  const rawWords = text.split(/\s+/).filter(Boolean);
+  const textNorm = normalizeSpeech(text).split(' ').filter(Boolean);
+  const spokenNorm = normalizeSpeech(spokenText).split(' ').filter(Boolean);
+  const maxK = Math.min(textNorm.length, spokenNorm.length);
+  for (let k = maxK; k >= 2; k--) {
+    const suffix = textNorm.slice(textNorm.length - k);
+    const prefix = spokenNorm.slice(0, k);
+    if (suffix.every((word, i) => word === prefix[i])) {
+      return rawWords.slice(0, rawWords.length - k).join(' ').trim();
+    }
+  }
+  return text;
 }
 
 type VoiceAgentOptions = {
@@ -484,7 +502,20 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   // start/stop sounds and no dead time between turns.
   const consumeUtterance = useCallback(
     (fullTranscript: string) => {
-      const effective = transcriptDelta(utteranceBaseRef.current, fullTranscript);
+      let effective = transcriptDelta(utteranceBaseRef.current, fullTranscript);
+      // Same echo defenses as the interim path — the consumed utterance must
+      // never contain Vizi's own words.
+      const tail = lastSpokenRef.current;
+      const echoSource =
+        speakingTextRef.current ?? (tail && Date.now() < tail.expiresAt ? tail.text : null);
+      if (echoSource && effective) {
+        if (looksLikeEcho(effective, echoSource)) {
+          utteranceBaseRef.current = fullTranscript;
+          log(`ignored own-voice echo at consume: "${effective.slice(0, 60)}"`);
+          return;
+        }
+        effective = trimEchoSuffix(effective, echoSource);
+      }
       // Remember the pre-consume base: if the user keeps talking while this
       // turn is thinking, the turn is canceled and the base rolls back so the
       // next consume includes the whole utterance, not just the tail fragment.
@@ -516,7 +547,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   useSpeechRecognitionEvent('result', (event) => {
     const full = event.results?.[0]?.transcript ?? '';
-    const effective = transcriptDelta(utteranceBaseRef.current, full);
+    let effective = transcriptDelta(utteranceBaseRef.current, full);
     if (!effective) {
       return;
     }
@@ -528,10 +559,22 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     const tail = lastSpokenRef.current;
     const echoSource =
       speakingTextRef.current ?? (tail && Date.now() < tail.expiresAt ? tail.text : null);
-    if (echoSource && looksLikeEcho(effective, echoSource)) {
-      utteranceBaseRef.current = full;
-      log(`ignored own-voice echo: "${effective.slice(0, 60)}"`);
-      return;
+    if (echoSource) {
+      if (looksLikeEcho(effective, echoSource)) {
+        utteranceBaseRef.current = full;
+        log(`ignored own-voice echo: "${effective.slice(0, 60)}"`);
+        return;
+      }
+      // Mixed case: user's words with Vizi's echo appended at the end.
+      const trimmed = trimEchoSuffix(effective, echoSource);
+      if (trimmed !== effective) {
+        log(`trimmed echo suffix: "${effective.slice(0, 60)}" -> "${trimmed.slice(0, 60)}"`);
+        effective = trimmed;
+        if (!effective) {
+          utteranceBaseRef.current = full;
+          return;
+        }
+      }
     }
 
     if (statusRef.current === 'speaking') {
