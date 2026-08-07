@@ -1,8 +1,9 @@
-import { getLocales } from 'expo-localization';
-
 // Lightweight UI localization. The AI conversation is already multilingual
 // (Gemini mirrors the user's language; Fish Audio speaks it); this covers the
 // app chrome and Vizi's canned spoken phrases.
+//
+// Locale detection uses Hermes' built-in Intl (reflects the device language on
+// iOS) — no native module required.
 
 type Strings = {
   statusNeedsPermission: string;
@@ -374,10 +375,16 @@ const translations: Record<string, Strings> = {
   },
 };
 
-const deviceLocale = getLocales()[0];
+function detectLanguageTag(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().locale || 'en-US';
+  } catch {
+    return 'en-US';
+  }
+}
 
-export const languageCode = deviceLocale?.languageCode ?? 'en';
-export const languageTag = deviceLocale?.languageTag ?? 'en-US';
+export const languageTag = detectLanguageTag();
+export const languageCode = languageTag.split('-')[0].toLowerCase();
 
 const strings: Strings = translations[languageCode] ?? en;
 

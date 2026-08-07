@@ -23,7 +23,6 @@
     "expo-glass-effect": "~57.0.1",
     "expo-image": "~57.0.2",
     "expo-linking": "~57.0.5",
-    "expo-localization": "~57.0.1",
     "expo-router": "~57.0.11",
     "expo-speech": "~57.0.1",
     "expo-speech-recognition": "^56.0.1",
