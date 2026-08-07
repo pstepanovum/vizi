@@ -6,6 +6,7 @@ import {
   useSpeechRecognitionEvent,
 } from 'expo-speech-recognition';
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import { SessionStatus } from '@/features/session/session-status';
 import { matchVoiceCommand } from '@/features/voice/voice-commands';
@@ -125,6 +126,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const lastAnswerRef = useRef<string | null>(null);
   const narrationPausedRef = useRef(false);
   const lastDescribedFrameSizeRef = useRef<number | null>(null);
+  const appActiveRef = useRef(AppState.currentState === 'active');
   const recognitionRunningRef = useRef(false);
   const recognitionErrorsRef = useRef(0);
   const lastSpeechAtRef = useRef(0);
@@ -135,6 +137,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   mutedRef.current = muted;
 
   const startListening = useCallback(async ({ forBargeIn = false } = {}) => {
+    if (!appActiveRef.current) {
+      log('startListening skipped — app in background');
+      return;
+    }
     if (mutedRef.current) {
       log('startListening skipped — microphone muted');
       return;
@@ -589,6 +595,34 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       }
     };
   }, [status, muted, runTurn]);
+
+  // Lifecycle: pause the whole session in the background (camera and mic are
+  // unavailable there — retrying just spins), resume on foreground.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      const active = state === 'active';
+      if (active === appActiveRef.current) {
+        return;
+      }
+      appActiveRef.current = active;
+      if (!active) {
+        log('app backgrounded — pausing session');
+        stopPlayback();
+        stopListening();
+        clearEagerEndpoint();
+        pendingFrameRef.current = null;
+        setStatus('connecting');
+        return;
+      }
+      log('app foregrounded — resuming session');
+      if (!mutedRef.current) {
+        startListening();
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [clearEagerEndpoint, startListening, stopListening, stopPlayback]);
 
   // Session bootstrap: wait for camera permission, then open the mic.
   useEffect(() => {
