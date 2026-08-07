@@ -14,6 +14,14 @@ vizi-assets/firebase/*.zip
 # Fonts — licensed assets stay local
 vizi-assets/font/
 vizi-mobile/assets/fonts/
+vizi-assets/screenshot-studio/public/fonts/Chunk.*
+
+# Screenshot studio — generated output and re-downloadable demo photos.
+# The studio source itself IS committed; see its README.
+vizi-assets/screenshot-studio/node_modules/
+vizi-assets/screenshots/
+vizi-assets/screenshot-studio/public/scenes/*.jpg
+vizi-assets/screenshot-studio/dist/
 
 # Dependencies
 node_modules/

@@ -1,0 +1,28 @@
+{
+  "name": "vizi-screenshot-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Recreates Vizi's UI in the browser and exports App Store / Play Store screenshots at exact pixel sizes.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "scenes": "node scripts/fetch-scenes.mjs",
+    "fonts": "node scripts/copy-fonts.mjs",
+    "export": "node scripts/export.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}
