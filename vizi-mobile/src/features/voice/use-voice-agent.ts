@@ -8,6 +8,7 @@ import {
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import { SessionStatus } from '@/features/session/session-status';
+import { matchVoiceCommand } from '@/features/voice/voice-commands';
 import { hasFishAudioKey, synthesizeSpeech } from '@/lib/fish-audio/client';
 import { askGemini, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
 import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
@@ -116,6 +117,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const eagerEndpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingTextRef = useRef<string | null>(null);
+  const lastAnswerRef = useRef<string | null>(null);
   const recognitionRunningRef = useRef(false);
   const recognitionErrorsRef = useRef(0);
   const lastSpeechAtRef = useRef(0);
@@ -154,9 +156,11 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           categoryOptions: ['defaultToSpeaker', 'allowBluetooth'],
           mode: 'default',
         },
-        // Hardware echo cancellation: subtracts Vizi's own speaker output from
-        // the mic feed so the barge-in listener doesn't hear the agent itself.
-        iosVoiceProcessingEnabled: true,
+        // Hardware echo cancellation — only while Vizi is speaking (the
+        // barge-in listener). Voice processing applies aggressive AGC that
+        // audibly pumps ("bounces") the output level, so keep it off during
+        // normal listening where there is nothing to echo-cancel.
+        iosVoiceProcessingEnabled: forBargeIn,
       });
       recognitionRunningRef.current = true;
       log(forBargeIn ? 'barge-in listener started' : 'listening started');
@@ -354,6 +358,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         ];
         historyRef.current = [...historyRef.current, ...newTurns].slice(-MAX_HISTORY_TURNS);
         setLastAnswer(answer);
+        lastAnswerRef.current = answer;
         if (!ambient) {
           setLastQuestion(question);
           appendTranscript('user', question);
@@ -395,6 +400,20 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     const transcript = event.results?.[0]?.transcript?.trim();
     if (event.isFinal && transcript) {
       clearEagerEndpoint();
+      // Local command intents — handled instantly, nothing sent to the model.
+      const command = matchVoiceCommand(transcript);
+      if (command === 'stop') {
+        log(`voice command: stop ("${transcript}")`);
+        stopPlayback();
+        startListening();
+        return;
+      }
+      if (command === 'repeat') {
+        log(`voice command: repeat ("${transcript}")`);
+        stopListening();
+        speak(lastAnswerRef.current ?? t('noAnswerYet'));
+        return;
+      }
       log(`heard: "${transcript}"`);
       runTurn(transcript);
       return;
@@ -431,17 +450,22 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   useSpeechRecognitionEvent('end', () => {
     recognitionRunningRef.current = false;
     // The OS recognizer times out on silence; keep the session (and the
-    // barge-in listener while speaking) alive.
-    if (statusRef.current === 'listening' || statusRef.current === 'speaking') {
+    // barge-in listener while speaking) alive. Restart lazily while speaking —
+    // each session (re)start briefly dips playback volume, so fewer restarts
+    // means steadier audio.
+    if (statusRef.current === 'listening') {
       scheduleRestart();
+    } else if (statusRef.current === 'speaking') {
+      scheduleRestart(1200);
     }
   });
 
   useSpeechRecognitionEvent('error', (event) => {
     recognitionRunningRef.current = false;
     if (statusRef.current === 'speaking') {
-      // Keep the barge-in listener alive through recognizer hiccups.
-      scheduleRestart(400);
+      // Keep the barge-in listener alive through recognizer hiccups — lazily,
+      // to avoid audible session-restart dips in the playback.
+      scheduleRestart(1200);
       return;
     }
     if (statusRef.current !== 'listening') {
