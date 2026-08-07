@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { type PurchasesPackage } from 'react-native-purchases';
 
-import { MASCOT_SVG, svgToDataUri } from '@/components/icons';
+import { MASCOT_SVG, svgToDataUri, UNLOCK_ICON_SVG } from '@/components/icons';
 import { PAYWALL_PATTERN_SVG } from '@/components/paywall-pattern';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
@@ -102,6 +102,7 @@ export default function PaywallScreen() {
             <RoundedButton
               key={pkg.identifier}
               label={`${PACKAGE_LABELS[pkg.packageType]?.() ?? pkg.packageType} — ${pkg.product.priceString}`}
+              iconSvg={index === 0 ? UNLOCK_ICON_SVG : undefined}
               variant={index === 0 ? 'primary' : 'neutral'}
               onPress={() => !busy && buy(pkg)}
             />

@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
+import { SIGN_OUT_ICON_SVG, UNLOCK_ICON_SVG } from '@/components/icons';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { signOutUser, useAuthUser } from '@/lib/auth';
@@ -87,6 +88,7 @@ export default function SettingsScreen() {
         {!plus && (
           <RoundedButton
             label={t('paywallTitle')}
+            iconSvg={UNLOCK_ICON_SVG}
             onPress={() => router.push('/paywall' as Href)}
           />
         )}
@@ -188,6 +190,7 @@ export default function SettingsScreen() {
         </View>
         <RoundedButton
           label={t('signOut')}
+          iconSvg={SIGN_OUT_ICON_SVG}
           variant="neutral"
           onPress={() => {
             signOutUser();
