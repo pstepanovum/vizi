@@ -1,8 +1,10 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
+import { MASCOT_SVG, svgToDataUri } from '@/components/icons';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { signInWithApple, signInWithGoogle, signOutUser, useAuthUser } from '@/lib/auth';
@@ -59,6 +61,13 @@ export default function AccountScreen() {
 
   return (
     <Screen style={styles.screen}>
+      <Image
+        source={{ uri: svgToDataUri(MASCOT_SVG) }}
+        style={styles.mascot}
+        contentFit="contain"
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+      />
       <Text style={styles.wordmark}>Vizi</Text>
       <View style={styles.body}>
         <Text style={styles.title}>{t('accountTitle')}</Text>
@@ -83,6 +92,12 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   screen: {
     justifyContent: 'center',
+  },
+  mascot: {
+    width: 220,
+    height: 217,
+    alignSelf: 'center',
+    marginBottom: spacing.md,
   },
   wordmark: {
     ...typography.brand,
