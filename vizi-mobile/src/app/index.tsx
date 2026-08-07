@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
 import { IconButton } from '@/components/icon-button';
-import { CHAT_ICON_SVG, GEAR_ICON_SVG, MIC_OFF_ICON_SVG, MIC_ON_ICON_SVG } from '@/components/icons';
+import { CHAT_ICON_SVG, MIC_OFF_ICON_SVG, MIC_ON_ICON_SVG } from '@/components/icons';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { CameraView } from '@/features/camera/camera-view';
@@ -29,26 +29,16 @@ export default function SessionScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <View style={styles.headerSide}>
-          <SessionStatusBar status={status} muted={muted} />
-        </View>
         <Text accessibilityRole="header" style={styles.wordmark}>
           Vizi
         </Text>
-        <View style={[styles.headerSide, styles.headerRight]}>
-          <IconButton
-            svg={GEAR_ICON_SVG}
-            accessibilityLabel="Settings"
-            size={44}
-            onPress={() => {
-              // Settings screen comes later.
-            }}
-          />
-        </View>
       </View>
 
       <View style={styles.cameraArea}>
         <CameraView cameraRef={cameraRef} />
+        <View style={styles.statusOverlay}>
+          <SessionStatusBar status={status} muted={muted} />
+        </View>
         {chatVisible && (
           <View style={styles.chatOverlay}>
             <ChatTranscript entries={transcript} />
@@ -83,17 +73,8 @@ export default function SessionScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
     paddingVertical: spacing.md,
-  },
-  headerSide: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  headerRight: {
-    alignItems: 'flex-end',
   },
   wordmark: {
     ...typography.brand,
@@ -101,6 +82,13 @@ const styles = StyleSheet.create({
   },
   cameraArea: {
     flex: 1,
+  },
+  statusOverlay: {
+    position: 'absolute',
+    top: spacing.md,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   chatOverlay: {
     position: 'absolute',

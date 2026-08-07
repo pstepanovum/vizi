@@ -1,4 +1,3 @@
-import { BlurView } from 'expo-blur';
 import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -13,7 +12,7 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
   const scrollRef = useRef<ScrollView>(null);
 
   return (
-    <BlurView intensity={40} tint="light" style={styles.panel}>
+    <View style={styles.panel}>
       {entries.length === 0 ? (
         <Text style={styles.empty}>The conversation will appear here.</Text>
       ) : (
@@ -30,7 +29,7 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
           ))}
         </ScrollView>
       )}
-    </BlurView>
+    </View>
   );
 }
 
