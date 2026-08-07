@@ -59,6 +59,8 @@ type Strings = {
   done: string;
   purchaseFailed: string;
   offeringsUnavailable: string;
+  freeLimitReached: string;
+  questionsLeftLabel: string;
 };
 
 const en: Strings = {
@@ -115,6 +117,8 @@ const en: Strings = {
   done: 'Done',
   purchaseFailed: 'Purchase failed. Please try again.',
   offeringsUnavailable: 'Subscriptions are not available right now.',
+  freeLimitReached: 'You have used all your free questions for today. Upgrade to Vizi Plus for unlimited conversations.',
+  questionsLeftLabel: 'Free questions left today',
 };
 
 const translations: Record<string, Strings> = {
@@ -173,6 +177,8 @@ const translations: Record<string, Strings> = {
     done: 'Listo',
     purchaseFailed: 'Error en la compra. Inténtalo de nuevo.',
     offeringsUnavailable: 'Las suscripciones no están disponibles ahora mismo.',
+    freeLimitReached: 'Has usado todas tus preguntas gratis de hoy. Mejora a Vizi Plus para conversaciones ilimitadas.',
+    questionsLeftLabel: 'Preguntas gratis restantes hoy',
   },
   fr: {
     statusNeedsPermission: 'Accès à la caméra requis',
@@ -228,6 +234,8 @@ const translations: Record<string, Strings> = {
     done: 'Terminé',
     purchaseFailed: 'Échec de l’achat. Veuillez réessayer.',
     offeringsUnavailable: 'Les abonnements ne sont pas disponibles pour le moment.',
+    freeLimitReached: 'Vous avez utilisé toutes vos questions gratuites pour aujourd’hui. Passez à Vizi Plus pour des conversations illimitées.',
+    questionsLeftLabel: 'Questions gratuites restantes aujourd’hui',
   },
   de: {
     statusNeedsPermission: 'Kamerazugriff erforderlich',
@@ -283,6 +291,8 @@ const translations: Record<string, Strings> = {
     done: 'Fertig',
     purchaseFailed: 'Kauf fehlgeschlagen. Bitte erneut versuchen.',
     offeringsUnavailable: 'Abos sind derzeit nicht verfügbar.',
+    freeLimitReached: 'Du hast deine kostenlosen Fragen für heute aufgebraucht. Hole dir Vizi Plus für unbegrenzte Gespräche.',
+    questionsLeftLabel: 'Verbleibende kostenlose Fragen heute',
   },
   it: {
     statusNeedsPermission: 'Accesso alla fotocamera necessario',
@@ -338,6 +348,8 @@ const translations: Record<string, Strings> = {
     done: 'Fine',
     purchaseFailed: 'Acquisto non riuscito. Riprova.',
     offeringsUnavailable: 'Gli abbonamenti non sono disponibili al momento.',
+    freeLimitReached: 'Hai esaurito le domande gratuite di oggi. Passa a Vizi Plus per conversazioni illimitate.',
+    questionsLeftLabel: 'Domande gratuite rimaste oggi',
   },
   pt: {
     statusNeedsPermission: 'Acesso à câmera necessário',
@@ -393,6 +405,8 @@ const translations: Record<string, Strings> = {
     done: 'Concluído',
     purchaseFailed: 'Falha na compra. Tente novamente.',
     offeringsUnavailable: 'As assinaturas não estão disponíveis no momento.',
+    freeLimitReached: 'Você usou todas as suas perguntas gratuitas de hoje. Assine o Vizi Plus para conversas ilimitadas.',
+    questionsLeftLabel: 'Perguntas gratuitas restantes hoje',
   },
   ru: {
     statusNeedsPermission: 'Нужен доступ к камере',
@@ -448,6 +462,8 @@ const translations: Record<string, Strings> = {
     done: 'Готово',
     purchaseFailed: 'Не удалось совершить покупку. Попробуйте ещё раз.',
     offeringsUnavailable: 'Подписки сейчас недоступны.',
+    freeLimitReached: 'Вы использовали все бесплатные вопросы на сегодня. Перейдите на Vizi Plus для неограниченных разговоров.',
+    questionsLeftLabel: 'Осталось бесплатных вопросов сегодня',
   },
   uk: {
     statusNeedsPermission: 'Потрібен доступ до камери',
@@ -503,6 +519,8 @@ const translations: Record<string, Strings> = {
     done: 'Готово',
     purchaseFailed: 'Не вдалося здійснити покупку. Спробуйте ще раз.',
     offeringsUnavailable: 'Підписки зараз недоступні.',
+    freeLimitReached: 'Ви використали всі безкоштовні запитання на сьогодні. Перейдіть на Vizi Plus для необмежених розмов.',
+    questionsLeftLabel: 'Залишилось безкоштовних запитань сьогодні',
   },
   zh: {
     statusNeedsPermission: '需要相机权限',
@@ -558,6 +576,8 @@ const translations: Record<string, Strings> = {
     done: '完成',
     purchaseFailed: '购买失败，请重试。',
     offeringsUnavailable: '订阅目前不可用。',
+    freeLimitReached: '你今天的免费提问次数已用完。升级到 Vizi Plus 享受无限对话。',
+    questionsLeftLabel: '今日剩余免费提问',
   },
   ja: {
     statusNeedsPermission: 'カメラへのアクセスが必要です',
@@ -613,6 +633,8 @@ const translations: Record<string, Strings> = {
     done: '完了',
     purchaseFailed: '購入に失敗しました。もう一度お試しください。',
     offeringsUnavailable: '現在サブスクリプションは利用できません。',
+    freeLimitReached: '本日の無料質問をすべて使い切りました。Vizi Plusで無制限の会話をお楽しみください。',
+    questionsLeftLabel: '本日の残り無料質問数',
   },
   ko: {
     statusNeedsPermission: '카메라 접근 권한 필요',
@@ -668,6 +690,8 @@ const translations: Record<string, Strings> = {
     done: '완료',
     purchaseFailed: '구매에 실패했어요. 다시 시도해 주세요.',
     offeringsUnavailable: '현재 구독을 이용할 수 없어요.',
+    freeLimitReached: '오늘의 무료 질문을 모두 사용했어요. Vizi Plus로 업그레이드하면 무제한 대화가 가능해요.',
+    questionsLeftLabel: '오늘 남은 무료 질문',
   },
   ar: {
     statusNeedsPermission: 'مطلوب إذن الكاميرا',
@@ -723,6 +747,8 @@ const translations: Record<string, Strings> = {
     done: 'تم',
     purchaseFailed: 'فشلت عملية الشراء. حاول مرة أخرى.',
     offeringsUnavailable: 'الاشتراكات غير متاحة حاليًا.',
+    freeLimitReached: 'لقد استخدمت كل أسئلتك المجانية لليوم. قم بالترقية إلى Vizi Plus لمحادثات غير محدودة.',
+    questionsLeftLabel: 'الأسئلة المجانية المتبقية اليوم',
   },
 };
 

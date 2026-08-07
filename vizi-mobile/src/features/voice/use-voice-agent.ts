@@ -9,9 +9,13 @@ import {
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
+import { useIsFocused } from '@react-navigation/native';
+
 import { SessionStatus } from '@/features/session/session-status';
 import { matchVoiceCommand } from '@/features/voice/voice-commands';
+import { isPlus, useCustomerInfo } from '@/lib/purchases';
 import { getSettings } from '@/lib/settings';
+import { recordQuestion, remainingFreeQuestions } from '@/lib/usage';
 import { hasFishAudioKey, synthesizeSpeech } from '@/lib/fish-audio/client';
 import { askGemini, askGeminiStream, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
 import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
@@ -159,6 +163,10 @@ export type TranscriptEntry = {
 
 export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const [cameraPermission] = useCameraPermissions();
+  const focused = useIsFocused();
+  const customerInfo = useCustomerInfo();
+  const plusRef = useRef(false);
+  plusRef.current = isPlus(customerInfo);
   const [status, setStatus] = useState<SessionStatus>('connecting');
   const [lastAnswer, setLastAnswer] = useState<string | null>(null);
   const [lastQuestion, setLastQuestion] = useState<string | null>(null);
@@ -188,6 +196,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const narrationPausedRef = useRef(false);
   const lastDescribedFrameSizeRef = useRef<number | null>(null);
   const appActiveRef = useRef(AppState.currentState === 'active');
+  const focusedRef = useRef(true);
   // Monotonic turn id — bumping it cancels any in-flight turn (its async
   // stages check staleness before acting), OpenAI-response-cancel style.
   const turnIdRef = useRef(0);
@@ -206,8 +215,8 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   mutedRef.current = muted;
 
   const startListening = useCallback(async ({ forBargeIn = false } = {}) => {
-    if (!appActiveRef.current) {
-      log('startListening skipped — app in background');
+    if (!appActiveRef.current || !focusedRef.current) {
+      log('startListening skipped — app in background or screen unfocused');
       return;
     }
     if (mutedRef.current) {
@@ -533,6 +542,17 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       // Recognition keeps running through the whole turn — no stop/start
       // clicks, and the user can interrupt at any stage. If they do, the turn
       // id moves on and this turn quietly discards itself.
+      // Free-plan daily cap: questions beyond the limit get a spoken upgrade
+      // notice instead of a Gemini call. Voice commands stay free; Plus is
+      // unlimited.
+      if (!ambient && !plusRef.current) {
+        if (remainingFreeQuestions() <= 0) {
+          log('free daily limit reached — question blocked');
+          speak(t('freeLimitReached'));
+          return;
+        }
+        recordQuestion();
+      }
       const turnId = ++turnIdRef.current;
       const isStale = () => turnIdRef.current !== turnId;
       clearEagerEndpoint();
@@ -877,7 +897,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         if (statusRef.current !== 'listening' || mutedRef.current) {
           return;
         }
-        if (narrationPausedRef.current || !getSettings().ambientNarration) {
+        // Ambient narration is a Plus feature — it is the biggest continuous
+        // API cost, so the free plan keeps only on-demand questions.
+        if (narrationPausedRef.current || !getSettings().ambientNarration || !plusRef.current) {
           armAmbient(AUTO_DESCRIBE_INTERVAL_MS);
           return;
         }
@@ -919,6 +941,27 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       }
     };
   }, [status, muted, runTurn]);
+
+  // Screen focus: pause the session while another screen (e.g. the Vizi+
+  // settings sheet) covers this one — no camera sampling, no Gemini calls,
+  // no narration under a modal. Resume when the screen regains focus.
+  useEffect(() => {
+    focusedRef.current = focused;
+    if (!focused) {
+      log('screen unfocused — pausing session');
+      turnIdRef.current += 1;
+      stopPlayback();
+      stopListening();
+      clearEagerEndpoint();
+      pendingFrameRef.current = null;
+      setStatus('connecting');
+      return;
+    }
+    log('screen focused — resuming session');
+    if (appActiveRef.current && !mutedRef.current) {
+      startListening();
+    }
+  }, [focused, clearEagerEndpoint, startListening, stopListening, stopPlayback]);
 
   // Lifecycle: pause the whole session in the background (camera and mic are
   // unavailable there — retrying just spins), resume on foreground.

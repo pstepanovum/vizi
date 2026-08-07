@@ -16,6 +16,7 @@ import {
   useCustomerInfo,
 } from '@/lib/purchases';
 import { setSetting, useSettings } from '@/lib/settings';
+import { remainingFreeQuestions } from '@/lib/usage';
 import { colors, radius, spacing, typography } from '@/theme';
 
 const PRIVACY_POLICY_URL =
@@ -93,6 +94,11 @@ export default function SettingsScreen() {
           {plus && expiration && (
             <Text style={styles.caption}>
               {t('renewalLabel')}: {new Date(expiration).toLocaleDateString()}
+            </Text>
+          )}
+          {!plus && (
+            <Text style={styles.caption}>
+              {t('questionsLeftLabel')}: {remainingFreeQuestions()}
             </Text>
           )}
         </View>
