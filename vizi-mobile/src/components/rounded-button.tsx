@@ -1,7 +1,9 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { svgToDataUri } from '@/components/icons';
+import { usePressBounce } from '@/components/use-press-bounce';
 import { colors, radius, spacing, typography } from '@/theme';
 
 type RoundedButtonProps = {
@@ -19,24 +21,37 @@ export function RoundedButton({
   style,
   iconSvg,
 }: RoundedButtonProps) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressBounce();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        variant === 'neutral' && styles.neutral,
-        pressed && styles.pressed,
-        style,
-      ]}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
     >
-      {iconSvg && (
-        <Image source={{ uri: svgToDataUri(iconSvg) }} style={styles.icon} contentFit="contain" />
+      {({ pressed }) => (
+        <Animated.View
+          style={[
+            styles.button,
+            variant === 'neutral' && styles.neutral,
+            pressed && styles.pressed,
+            style,
+            animatedStyle,
+          ]}
+        >
+          {iconSvg && (
+            <Image
+              source={{ uri: svgToDataUri(iconSvg) }}
+              style={styles.icon}
+              contentFit="contain"
+            />
+          )}
+          <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {label}
+          </Text>
+        </Animated.View>
       )}
-      <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-        {label}
-      </Text>
     </Pressable>
   );
 }
@@ -61,7 +76,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray200,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.85,
   },
   label: {
     ...typography.button,

@@ -1,7 +1,9 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { svgToDataUri } from '@/components/icons';
+import { usePressBounce } from '@/components/use-press-bounce';
 import { colors, radius } from '@/theme';
 
 type IconButtonProps = {
@@ -20,23 +22,32 @@ export function IconButton({
   size = 64,
 }: IconButtonProps) {
   const iconSize = Math.round(size * 0.44);
+  const { animatedStyle, onPressIn, onPressOut } = usePressBounce();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        { width: size, height: size },
-        active && styles.active,
-        pressed && styles.pressed,
-      ]}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
     >
-      <Image
-        source={{ uri: svgToDataUri(svg) }}
-        style={{ width: iconSize, height: iconSize }}
-        contentFit="contain"
-      />
+      {({ pressed }) => (
+        <Animated.View
+          style={[
+            styles.button,
+            { width: size, height: size },
+            active && styles.active,
+            pressed && styles.pressed,
+            animatedStyle,
+          ]}
+        >
+          <Image
+            source={{ uri: svgToDataUri(svg) }}
+            style={{ width: iconSize, height: iconSize }}
+            contentFit="contain"
+          />
+        </Animated.View>
+      )}
     </Pressable>
   );
 }
@@ -52,6 +63,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.85,
   },
 });
