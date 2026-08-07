@@ -22,7 +22,9 @@ export function RoundedButton({ label, onPress, variant = 'primary', style }: Ro
         style,
       ]}
     >
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -34,7 +36,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
   neutral: {

@@ -22,7 +22,7 @@ export const typography = {
   },
   button: {
     fontFamily: fonts.semibold,
-    fontSize: 18,
+    fontSize: 16,
   },
   caption: {
     fontFamily: fonts.regular,
