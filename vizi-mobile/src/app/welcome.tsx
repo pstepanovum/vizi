@@ -2,14 +2,15 @@ import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { MASCOT_SVG, svgToDataUri } from '@/components/icons';
 import { PAYWALL_PATTERN_SVG } from '@/components/paywall-pattern';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { welcomeAudioSource, type WelcomeSlide } from '@/features/onboarding/welcome-audio';
-import { t } from '@/lib/i18n';
+import { announce, isScreenReaderEnabled } from '@/lib/a11y';
+import { t, tf } from '@/lib/i18n';
 import { setSetting } from '@/lib/settings';
 import { colors, spacing, typography } from '@/theme';
 
@@ -34,28 +35,44 @@ export default function WelcomeScreen() {
   }, []);
 
   // Play the slide's recorded narration on mount and on every slide change.
+  // Skipped while a screen reader is running: VoiceOver already speaks the
+  // slide (see the announcement below), and two voices at once is unusable.
+  // The check is awaited before the player is created so no audio ever leaks
+  // out ahead of it.
   useEffect(() => {
     stopVoiceover();
-    const player = createAudioPlayer(welcomeAudioSource(SLIDES[index]));
-    player.volume = 1.0;
-    playerRef.current = player;
-    player.addListener('playbackStatusUpdate', (status) => {
-      if (status.didJustFinish && playerRef.current === player) {
-        playerRef.current = null;
-        player.release();
+    let cancelled = false;
+    isScreenReaderEnabled().then((screenReader) => {
+      if (cancelled || screenReader) {
+        return;
       }
+      const player = createAudioPlayer(welcomeAudioSource(SLIDES[index]));
+      player.volume = 1.0;
+      playerRef.current = player;
+      player.addListener('playbackStatusUpdate', (status) => {
+        if (status.didJustFinish && playerRef.current === player) {
+          playerRef.current = null;
+          player.release();
+        }
+      });
+      player.play();
     });
-    player.play();
-    return stopVoiceover;
+    return () => {
+      cancelled = true;
+      stopVoiceover();
+    };
   }, [index, stopVoiceover]);
 
   const title = t(`welcomeTitle${SLIDES[index]}`);
   const body = t(`welcomeBody${SLIDES[index]}`);
+  // The dots are the only visual progress cue, so the position also travels as
+  // text — in the announcement and as the dots group's label.
+  const progress = tf('slideProgress', { current: index + 1, total: SLIDES.length });
 
   // Mirror the narration for VoiceOver users.
   useEffect(() => {
-    AccessibilityInfo.announceForAccessibility(`${title}. ${body}`);
-  }, [title, body]);
+    announce(`${progress}. ${title}. ${body}`);
+  }, [progress, title, body]);
 
   const finish = useCallback(() => {
     stopVoiceover();
@@ -88,10 +105,14 @@ export default function WelcomeScreen() {
           </Text>
           <Text style={styles.body}>{body}</Text>
         </View>
-        <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no">
+        {/* The dots themselves are decoration; the group carries their meaning
+            as text so the position is reachable by swiping too. */}
+        <View accessible accessibilityRole="text" accessibilityLabel={progress} style={styles.dots}>
           {SLIDES.map((slide, dotIndex) => (
             <View
               key={slide}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
               style={[styles.dot, dotIndex === index ? styles.dotActive : styles.dotInactive]}
             />
           ))}

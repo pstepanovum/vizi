@@ -81,6 +81,9 @@ type Strings = {
   welcomeNext: string;
   welcomeStart: string;
   welcomeSkip: string;
+  openPlusSettings: string;
+  purchaseSuccess: string;
+  slideProgress: string;
 };
 
 const en: Strings = {
@@ -157,6 +160,9 @@ const en: Strings = {
   welcomeNext: 'Next',
   welcomeStart: 'Get started',
   welcomeSkip: 'Skip',
+  openPlusSettings: 'Vizi Plus and settings',
+  purchaseSuccess: 'Vizi Plus is now active.',
+  slideProgress: 'Step {current} of {total}',
 };
 
 const translations: Record<string, Strings> = {
@@ -235,6 +241,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'Siguiente',
     welcomeStart: 'Comenzar',
     welcomeSkip: 'Omitir',
+    openPlusSettings: 'Vizi Plus y ajustes',
+    purchaseSuccess: 'Vizi Plus ya está activo.',
+    slideProgress: 'Paso {current} de {total}',
   },
   fr: {
     statusNeedsPermission: 'Accès à la caméra requis',
@@ -310,6 +319,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'Suivant',
     welcomeStart: 'Commencer',
     welcomeSkip: 'Passer',
+    openPlusSettings: 'Vizi Plus et réglages',
+    purchaseSuccess: 'Vizi Plus est maintenant actif.',
+    slideProgress: 'Étape {current} sur {total}',
   },
   de: {
     statusNeedsPermission: 'Kamerazugriff erforderlich',
@@ -385,6 +397,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'Weiter',
     welcomeStart: 'Los geht’s',
     welcomeSkip: 'Überspringen',
+    openPlusSettings: 'Vizi Plus und Einstellungen',
+    purchaseSuccess: 'Vizi Plus ist jetzt aktiv.',
+    slideProgress: 'Schritt {current} von {total}',
   },
   it: {
     statusNeedsPermission: 'Accesso alla fotocamera necessario',
@@ -460,6 +475,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'Avanti',
     welcomeStart: 'Inizia',
     welcomeSkip: 'Salta',
+    openPlusSettings: 'Vizi Plus e impostazioni',
+    purchaseSuccess: 'Vizi Plus è ora attivo.',
+    slideProgress: 'Passo {current} di {total}',
   },
   pt: {
     statusNeedsPermission: 'Acesso à câmera necessário',
@@ -535,6 +553,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'Avançar',
     welcomeStart: 'Começar',
     welcomeSkip: 'Pular',
+    openPlusSettings: 'Vizi Plus e configurações',
+    purchaseSuccess: 'O Vizi Plus está ativo agora.',
+    slideProgress: 'Passo {current} de {total}',
   },
   ru: {
     statusNeedsPermission: 'Нужен доступ к камере',
@@ -610,6 +631,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'Далее',
     welcomeStart: 'Начать',
     welcomeSkip: 'Пропустить',
+    openPlusSettings: 'Vizi Plus и настройки',
+    purchaseSuccess: 'Vizi Plus теперь активен.',
+    slideProgress: 'Шаг {current} из {total}',
   },
   uk: {
     statusNeedsPermission: 'Потрібен доступ до камери',
@@ -685,6 +709,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'Далі',
     welcomeStart: 'Почати',
     welcomeSkip: 'Пропустити',
+    openPlusSettings: 'Vizi Plus і налаштування',
+    purchaseSuccess: 'Vizi Plus тепер активний.',
+    slideProgress: 'Крок {current} з {total}',
   },
   zh: {
     statusNeedsPermission: '需要相机权限',
@@ -760,6 +787,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: '下一步',
     welcomeStart: '开始使用',
     welcomeSkip: '跳过',
+    openPlusSettings: 'Vizi Plus 和设置',
+    purchaseSuccess: 'Vizi Plus 已激活。',
+    slideProgress: '第 {current} 步，共 {total} 步',
   },
   ja: {
     statusNeedsPermission: 'カメラへのアクセスが必要です',
@@ -835,6 +865,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: '次へ',
     welcomeStart: 'はじめる',
     welcomeSkip: 'スキップ',
+    openPlusSettings: 'Vizi Plus と設定',
+    purchaseSuccess: 'Vizi Plusが有効になりました。',
+    slideProgress: '{total}ステップ中{current}ステップ目',
   },
   ko: {
     statusNeedsPermission: '카메라 접근 권한 필요',
@@ -910,6 +943,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: '다음',
     welcomeStart: '시작하기',
     welcomeSkip: '건너뛰기',
+    openPlusSettings: 'Vizi Plus 및 설정',
+    purchaseSuccess: 'Vizi Plus가 활성화되었어요.',
+    slideProgress: '{total}단계 중 {current}단계',
   },
   ar: {
     statusNeedsPermission: 'مطلوب إذن الكاميرا',
@@ -985,6 +1021,9 @@ const translations: Record<string, Strings> = {
     welcomeNext: 'التالي',
     welcomeStart: 'ابدأ',
     welcomeSkip: 'تخطّي',
+    openPlusSettings: 'Vizi Plus والإعدادات',
+    purchaseSuccess: 'تم تفعيل Vizi Plus الآن.',
+    slideProgress: 'الخطوة {current} من {total}',
   },
 };
 
@@ -1038,4 +1077,12 @@ export function resolvedLanguageTag(): string {
 export function t(key: keyof Strings): string {
   const strings = translations[resolvedLanguageCode()] ?? en;
   return strings[key];
+}
+
+// Same as `t`, with `{name}` placeholders replaced. Used for strings that carry
+// a position or count (e.g. "Step 2 of 3" in the welcome slideshow).
+export function tf(key: keyof Strings, params: Record<string, string | number>): string {
+  return t(key).replace(/\{(\w+)\}/g, (match, name: string) =>
+    name in params ? String(params[name]) : match,
+  );
 }

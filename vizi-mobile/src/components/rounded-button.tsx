@@ -12,6 +12,12 @@ type RoundedButtonProps = {
   variant?: 'primary' | 'neutral';
   style?: ViewStyle;
   iconSvg?: string;
+  /** Extra context for screen readers when the label alone is ambiguous. */
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  /** Work in progress (purchase, restore, sign-in) — announced as "busy". */
+  busy?: boolean;
+  disabled?: boolean;
 };
 
 export function RoundedButton({
@@ -20,12 +26,20 @@ export function RoundedButton({
   variant = 'primary',
   style,
   iconSvg,
+  accessibilityLabel,
+  accessibilityHint,
+  busy = false,
+  disabled = false,
 }: RoundedButtonProps) {
   const { animatedStyle, onPressIn, onPressOut } = usePressBounce();
+  const inactive = disabled || busy;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: inactive, busy }}
+      disabled={inactive}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -45,11 +59,14 @@ export function RoundedButton({
               source={{ uri: svgToDataUri(iconSvg) }}
               style={styles.icon}
               contentFit="contain"
+              accessibilityElementsHidden
+              importantForAccessibility="no"
             />
           )}
-          <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-            {label}
-          </Text>
+          {/* No numberOfLines / adjustsFontSizeToFit: at large Dynamic Type
+              sizes those shrank or clipped the label. Wrapping keeps the whole
+              meaning visible for low-vision users. */}
+          <Text style={styles.label}>{label}</Text>
         </Animated.View>
       )}
     </Pressable>
@@ -81,5 +98,7 @@ const styles = StyleSheet.create({
   label: {
     ...typography.button,
     color: colors.textOnPrimary,
+    textAlign: 'center',
+    flexShrink: 1,
   },
 });

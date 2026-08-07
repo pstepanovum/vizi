@@ -1,13 +1,14 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { type PurchasesPackage } from 'react-native-purchases';
 
 import { CHECK_ICON_SVG, MASCOT_SVG, svgToDataUri, UNLOCK_ICON_SVG } from '@/components/icons';
 import { PAYWALL_PATTERN_SVG } from '@/components/paywall-pattern';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
+import { announce, useScreenAnnouncement } from '@/lib/a11y';
 import { t } from '@/lib/i18n';
 import {
   getCurrentOffering,
@@ -39,6 +40,8 @@ export default function PaywallScreen() {
 
   const plus = isPlus(customerInfo);
 
+  useScreenAnnouncement(t('paywallTitle'));
+
   useEffect(() => {
     if (!hasRevenueCatKey()) {
       return;
@@ -50,7 +53,9 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     if (plus) {
-      // Purchase landed — close the paywall.
+      // Purchase landed — say so before the screen disappears, otherwise the
+      // only feedback a VoiceOver user gets is the paywall vanishing.
+      announce(t('purchaseSuccess'));
       router.back();
     }
   }, [plus, router]);
@@ -63,6 +68,21 @@ export default function PaywallScreen() {
     } catch (err) {
       console.warn('[vizi:purchases] purchase failed:', err);
       setError(t('purchaseFailed'));
+      // accessibilityLiveRegion is Android-only — speak the failure on iOS.
+      announce(t('purchaseFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const restore = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await restorePurchases();
+    } catch {
+      setError(t('purchaseFailed'));
+      announce(t('purchaseFailed'));
     } finally {
       setBusy(false);
     }
@@ -92,7 +112,8 @@ export default function PaywallScreen() {
         </Text>
         <View style={styles.benefits}>
           {benefits.map((benefit) => (
-            <View key={benefit} style={styles.benefitRow}>
+            // Grouped so the checkmark and its text read as a single item.
+            <View key={benefit} accessible accessibilityRole="text" style={styles.benefitRow}>
               <Image
                 source={{ uri: svgToDataUri(CHECK_ICON_SVG) }}
                 style={styles.benefitIcon}
@@ -111,53 +132,53 @@ export default function PaywallScreen() {
               label={`${PACKAGE_LABELS[pkg.packageType]?.() ?? pkg.packageType} — ${pkg.product.priceString}`}
               iconSvg={index === 0 ? UNLOCK_ICON_SVG : undefined}
               variant={index === 0 ? 'primary' : 'neutral'}
-              onPress={() => !busy && buy(pkg)}
+              busy={busy}
+              onPress={() => buy(pkg)}
             />
           ))
         ) : (
           <Text style={styles.caption}>{t('offeringsUnavailable')}</Text>
         )}
         {error && (
-          <Text style={styles.caption} accessibilityLiveRegion="assertive">
+          <Text accessibilityRole="text" style={styles.caption} accessibilityLiveRegion="assertive">
             {error}
           </Text>
         )}
+        {/* Pressables, not tappable Text: 13pt captions gave targets well under
+            44pt, and the "·" separators were focusable but meaningless. */}
         <View style={styles.legalRow}>
-          <Text
+          <Pressable
             accessibilityRole="link"
-            style={styles.legalLink}
-            onPress={async () => {
-              if (busy) {
-                return;
-              }
-              setBusy(true);
-              try {
-                await restorePurchases();
-              } catch {
-                setError(t('purchaseFailed'));
-              } finally {
-                setBusy(false);
-              }
-            }}
+            accessibilityLabel={t('restorePurchases')}
+            accessibilityState={{ disabled: busy, busy }}
+            disabled={busy}
+            style={styles.legalTarget}
+            onPress={restore}
           >
-            {t('restorePurchases')}
+            <Text style={styles.legalLink}>{t('restorePurchases')}</Text>
+          </Pressable>
+          <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.legalDivider}>
+            ·
           </Text>
-          <Text style={styles.legalDivider}>·</Text>
-          <Text
+          <Pressable
             accessibilityRole="link"
-            style={styles.legalLink}
+            accessibilityLabel={t('privacyPolicy')}
+            style={styles.legalTarget}
             onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
           >
-            {t('privacyPolicy')}
+            <Text style={styles.legalLink}>{t('privacyPolicy')}</Text>
+          </Pressable>
+          <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.legalDivider}>
+            ·
           </Text>
-          <Text style={styles.legalDivider}>·</Text>
-          <Text
+          <Pressable
             accessibilityRole="link"
-            style={styles.legalLink}
+            accessibilityLabel={t('termsOfUse')}
+            style={styles.legalTarget}
             onPress={() => Linking.openURL(TERMS_OF_USE_URL)}
           >
-            {t('termsOfUse')}
-          </Text>
+            <Text style={styles.legalLink}>{t('termsOfUse')}</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </Screen>
@@ -214,11 +235,17 @@ const styles = StyleSheet.create({
   },
   legalRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
+  },
+  legalTarget: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
   },
   legalLink: {
     ...typography.caption,

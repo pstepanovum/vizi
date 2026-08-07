@@ -8,6 +8,7 @@ import { APPLE_ICON_SVG, GOOGLE_ICON_SVG, MASCOT_SVG, svgToDataUri } from '@/com
 import { PAYWALL_PATTERN_SVG } from '@/components/paywall-pattern';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
+import { announce, useScreenAnnouncement } from '@/lib/a11y';
 import { signInWithApple, signInWithGoogle, signOutUser, useAuthUser } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { colors, spacing, typography } from '@/theme';
@@ -18,6 +19,9 @@ export default function AccountScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
+
+  // Landing here is a screen change with no header; say where the user is.
+  useScreenAnnouncement(t('accountTitle'));
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -34,6 +38,9 @@ export default function AccountScreen() {
     } catch (err) {
       console.warn('[vizi:auth] sign-in failed:', err);
       setError(t('authError'));
+      // accessibilityLiveRegion is Android-only, so failures have to be spoken
+      // explicitly or a VoiceOver user never learns the sign-in did not work.
+      announce(t('authError'));
     } finally {
       setBusy(false);
     }
@@ -42,7 +49,9 @@ export default function AccountScreen() {
   if (user) {
     return (
       <Screen style={styles.screen}>
-        <Text style={styles.wordmark}>Vizi</Text>
+        <Text accessibilityRole="header" style={styles.wordmark}>
+          Vizi
+        </Text>
         <View style={styles.body}>
           <Text style={styles.subtitle}>
             {t('signedInAs')} {user.displayName ?? user.email ?? user.uid.slice(0, 8)}
@@ -78,21 +87,29 @@ export default function AccountScreen() {
       />
       <Text style={styles.wordmark}>Vizi</Text>
       <View style={styles.body}>
-        <Text style={styles.title}>{t('accountTitle')}</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          {t('accountTitle')}
+        </Text>
         <Text style={styles.subtitle}>{t('accountSubtitle')}</Text>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && (
+          <Text accessibilityRole="text" style={styles.error}>
+            {error}
+          </Text>
+        )}
         {appleAvailable && (
           <RoundedButton
             label={t('continueApple')}
             iconSvg={APPLE_ICON_SVG}
-            onPress={() => !busy && run(signInWithApple)}
+            busy={busy}
+            onPress={() => run(signInWithApple)}
           />
         )}
         <RoundedButton
           label={t('continueGoogle')}
           iconSvg={GOOGLE_ICON_SVG}
           variant="neutral"
-          onPress={() => !busy && run(signInWithGoogle)}
+          busy={busy}
+          onPress={() => run(signInWithGoogle)}
         />
       </View>
     </Screen>

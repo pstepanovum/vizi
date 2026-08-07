@@ -16,14 +16,26 @@ type SessionStatusBarProps = {
 export function SessionStatusBar({ status, muted = false }: SessionStatusBarProps) {
   const { largeText, highContrast } = useSettings();
   const label = muted && status === 'listening' ? t('statusMuted') : statusLabel(status);
+  // The dot's colour is the only visual mute indicator, and it stays grey while
+  // Vizi thinks or speaks. Spell the mute state out for anyone who cannot see
+  // it, without repeating it when the label already says so.
+  const spokenLabel = muted && label !== t('statusMuted') ? `${label}. ${t('statusMuted')}` : label;
 
   return (
     <View
+      accessible
+      accessibilityLabel={spokenLabel}
       accessibilityLiveRegion="polite"
       accessibilityRole="text"
       style={[styles.bar, highContrast && styles.barHighContrast]}
     >
-      <View style={[styles.dot, muted ? styles.dotMuted : styles.dotActive]} />
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+        style={[styles.dot, muted ? styles.dotMuted : styles.dotActive]}
+      />
+      {/* Wraps instead of shrinking: truncating "Camera access needed" would
+          hide the one thing the user has to act on. */}
       <Text
         style={[
           styles.label,
@@ -33,9 +45,6 @@ export function SessionStatusBar({ status, muted = false }: SessionStatusBarProp
           },
           highContrast && styles.labelHighContrast,
         ]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.8}
       >
         {label}
       </Text>

@@ -1,7 +1,7 @@
 import { CameraView as ExpoCameraView } from 'expo-camera';
 import { Redirect, useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
 import { IconButton } from '@/components/icon-button';
@@ -13,6 +13,7 @@ import { ChatTranscript } from '@/features/session/chat-transcript';
 import { SessionStatusBar } from '@/features/session/session-status-bar';
 import { statusAnnouncement } from '@/features/session/session-status';
 import { useVoiceAgent } from '@/features/voice/use-voice-agent';
+import { announce } from '@/lib/a11y';
 import { useAuthUser } from '@/lib/auth';
 import { identifyPurchaser } from '@/lib/purchases';
 import { useSettings } from '@/lib/settings';
@@ -54,11 +55,25 @@ function SessionScreen() {
   const { status, transcript } = useVoiceAgent({ cameraRef, muted });
 
   useEffect(() => {
-    if (status === 'connecting') {
+    // "connecting" is transient, and "speaking" would have VoiceOver talk over
+    // the answer Vizi is playing at that exact moment — the answer itself is
+    // the feedback. Both stay readable on the status bar.
+    if (status === 'connecting' || status === 'speaking') {
       return;
     }
-    AccessibilityInfo.announceForAccessibility(statusAnnouncement(status));
+    announce(statusAnnouncement(status));
   }, [status]);
+
+  // Mute is not a status change, so it needs its own announcement — otherwise
+  // the only feedback is a colour swap the user cannot see.
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    announce(muted ? t('statusMuted') : t('annListening'));
+  }, [muted]);
 
   return (
     <Screen>
@@ -70,6 +85,8 @@ function SessionScreen() {
         <View style={[styles.headerSide, styles.headerRight]}>
           <RoundedButton
             label="Vizi+"
+            // "Vizi plus" alone does not say what pressing it does.
+            accessibilityLabel={t('openPlusSettings')}
             onPress={() => router.push('/settings' as Href)}
             style={styles.plusButton}
           />
@@ -103,6 +120,7 @@ function SessionScreen() {
         <IconButton
           svg={CHAT_ICON_SVG}
           accessibilityLabel={chatVisible ? t('hideChat') : t('showChat')}
+          accessibilityState={{ expanded: chatVisible }}
           active={chatVisible}
           size={72}
           onPress={() => setChatVisible((value) => !value)}

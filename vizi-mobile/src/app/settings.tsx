@@ -5,6 +5,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from '
 import { SIGN_OUT_ICON_SVG, UNLOCK_ICON_SVG } from '@/components/icons';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
+import { announce, useScreenAnnouncement } from '@/lib/a11y';
 import { signOutUser, useAuthUser } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { isPlus, restorePurchases, useCustomerInfo } from '@/lib/purchases';
@@ -45,6 +46,9 @@ export default function SettingsScreen() {
 
   const plus = isPlus(customerInfo);
 
+  // Presented as a sheet over the live session — name it once it has settled.
+  useScreenAnnouncement(t('settingsTitle'));
+
   const restore = async () => {
     setBusy(true);
     setError(null);
@@ -53,6 +57,8 @@ export default function SettingsScreen() {
     } catch (err) {
       console.warn('[vizi:purchases] restore failed:', err);
       setError(t('purchaseFailed'));
+      // Android-only accessibilityLiveRegion cannot carry this on iOS.
+      announce(t('purchaseFailed'));
     } finally {
       setBusy(false);
     }
@@ -61,7 +67,7 @@ export default function SettingsScreen() {
   const expiration = customerInfo?.entitlements.active.plus?.expirationDate;
 
   return (
-    <Screen>
+    <Screen isModal>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text accessibilityRole="header" style={styles.title}>
           {t('settingsTitle')}
@@ -107,16 +113,22 @@ export default function SettingsScreen() {
           <RoundedButton
             label={t('restorePurchases')}
             variant="neutral"
-            onPress={() => !busy && restore()}
+            busy={busy}
+            onPress={restore}
           />
         )}
 
         <Text accessibilityRole="header" style={styles.section}>
           {t('sectionPreferences')}
         </Text>
+        {/* Each row's visible caption is hidden from the accessibility tree —
+            the switch itself carries the same text as its label, so exposing
+            both made VoiceOver read every setting twice. */}
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.body}>{t('toggleHaptics')}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.body}>
+              {t('toggleHaptics')}
+            </Text>
             <Switch
               accessibilityLabel={t('toggleHaptics')}
               value={settings.haptics}
@@ -125,7 +137,9 @@ export default function SettingsScreen() {
             />
           </View>
           <View style={styles.row}>
-            <Text style={styles.body}>{t('toggleAmbient')}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.body}>
+              {t('toggleAmbient')}
+            </Text>
             <Switch
               accessibilityLabel={t('toggleAmbient')}
               value={settings.ambientNarration}
@@ -134,7 +148,9 @@ export default function SettingsScreen() {
             />
           </View>
           <View style={styles.row}>
-            <Text style={styles.body}>{t('toggleLargeText')}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.body}>
+              {t('toggleLargeText')}
+            </Text>
             <Switch
               accessibilityLabel={t('toggleLargeText')}
               value={settings.largeText}
@@ -143,7 +159,9 @@ export default function SettingsScreen() {
             />
           </View>
           <View style={styles.row}>
-            <Text style={styles.body}>{t('toggleHighContrast')}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.body}>
+              {t('toggleHighContrast')}
+            </Text>
             <Switch
               accessibilityLabel={t('toggleHighContrast')}
               value={settings.highContrast}
@@ -166,7 +184,13 @@ export default function SettingsScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={label}
                   accessibilityState={{ selected }}
-                  onPress={() => setSetting('language', code)}
+                  hitSlop={spacing.sm}
+                  onPress={() => {
+                    setSetting('language', code);
+                    // Every string on screen changes language at once; say
+                    // which one took effect, in the new language.
+                    announce(`${t('sectionLanguage')}: ${label}`);
+                  }}
                   style={({ pressed }) => [
                     styles.pill,
                     selected && styles.pillSelected,
@@ -261,6 +285,9 @@ const styles = StyleSheet.create({
   pill: {
     borderRadius: radius.full,
     backgroundColor: colors.gray100,
+    // 44pt minimum touch target — the old 8pt padding left these at ~40pt.
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
   },

@@ -42,14 +42,25 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
           contentContainerStyle={styles.scrollContent}
         >
-          {entries.map((entry) => (
-            <View key={entry.id} style={styles.entry}>
-              <Text style={[styles.speaker, highContrast && styles.textHighContrast]}>
-                {entry.speaker === 'user' ? t('you') : 'Vizi'}
-              </Text>
-              <Text style={textStyle}>{entry.text}</Text>
-            </View>
-          ))}
+          {entries.map((entry) => {
+            const speaker = entry.speaker === 'user' ? t('you') : 'Vizi';
+            return (
+              // Grouped: VoiceOver reads "Vizi: the answer" as one item rather
+              // than splitting the speaker and the message into two swipes.
+              <View
+                key={entry.id}
+                accessible
+                accessibilityRole="text"
+                accessibilityLabel={`${speaker}: ${entry.text}`}
+                style={styles.entry}
+              >
+                <Text style={[styles.speaker, highContrast && styles.textHighContrast]}>
+                  {speaker}
+                </Text>
+                <Text style={textStyle}>{entry.text}</Text>
+              </View>
+            );
+          })}
         </ScrollView>
       )}
     </BlurView>

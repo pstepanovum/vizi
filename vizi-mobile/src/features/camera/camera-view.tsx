@@ -26,6 +26,7 @@ export function CameraView({ cameraRef }: CameraViewProps) {
     return (
       <View style={styles.permissionCard}>
         <Text
+          accessibilityRole="text"
           style={[
             styles.permissionText,
             largeText && {
@@ -43,8 +44,14 @@ export function CameraView({ cameraRef }: CameraViewProps) {
 
   return (
     <CameraFrame>
+      {/* The live preview means nothing to a VoiceOver user (and with the
+          screen curtain on it is not even rendered). Everything it would
+          convey reaches them through the status bar and Vizi's speech, so keep
+          it out of the accessibility tree entirely. */}
       <ExpoCameraView
         ref={cameraRef}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
         style={styles.camera}
         facing="back"
         animateShutter={false}
