@@ -106,7 +106,7 @@ flowchart TB
   end
 
   Client -->|ephemeral token| Token
-  Client <-->|WSS audio + frames| Live["Gemini Live API"]
+  Client <-->|Firebase AI Logic WSS| Live["Gemini Live (Firebase proxy)"]
 ```
 
 **Voice:** Gemini Live native audio in/out.  

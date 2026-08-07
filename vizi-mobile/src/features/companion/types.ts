@@ -7,6 +7,8 @@ export type CompanionEvents = {
   onError: (error: Error) => void;
 };
 
+export type CompanionMode = 'firebase' | 'live' | 'mock';
+
 export type VisionCompanion = {
   prepare(): Promise<void>;
   startSession(): Promise<void>;

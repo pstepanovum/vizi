@@ -16,10 +16,9 @@ AI vision companion — point your phone, ask naturally, get spoken answers.
 ```bash
 cd vizi-mobile
 cp .env.example .env
-# Optional: set EXPO_PUBLIC_GEMINI_API_KEY for real Gemini Live
 ```
 
-Without an API key the app runs a **mock companion** so Simulator demos still work.
+**Gemini Live** uses a direct API key in `.env` (`EXPO_PUBLIC_GEMINI_API_KEY`). Firebase AI Logic is optional (`EXPO_PUBLIC_COMPANION=firebase`). Without a key, the app uses a **mock companion**.
 
 ## Repository layout
 

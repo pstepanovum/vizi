@@ -21,7 +21,7 @@ Cold launch → live rear camera → listening → Gemini Live (or mock) answers
 
 ### Phase C — Gemini Live
 - [x] Token client (API key / token URL / mock)
-- [x] `VisionCompanion` + Live + Mock
+- [x] Firebase AI Logic Live companion (`@react-native-firebase/ai`) + WebSocket fallback + Mock
 - [x] Speech input + frames + spoken replies (`expo-speech`)
 - [x] Barge-in stops TTS on new speech
 
@@ -40,9 +40,9 @@ Cold launch → live rear camera → listening → Gemini Live (or mock) answers
 
 ```bash
 cd vizi-mobile
-cp .env.example .env   # optional Gemini key
+cp .env.example .env
 npm test
 npx expo run:ios
 ```
 
-Without `EXPO_PUBLIC_GEMINI_API_KEY`, the mock companion runs so Simulator demos still work.
+Default companion: direct Gemini Live (`EXPO_PUBLIC_GEMINI_API_KEY`). Optional: `EXPO_PUBLIC_COMPANION=firebase`. Otherwise mock.

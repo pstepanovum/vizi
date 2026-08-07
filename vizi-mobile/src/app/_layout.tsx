@@ -15,8 +15,8 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    // Chunk is a local licensed font (gitignored under assets/fonts/).
-    Chunk: require('../../assets/fonts/chunk.otf'),
+    // Prefer local Chunk when present; Poppins stands in until assets/fonts/chunk.otf is added.
+    Chunk: Poppins_600SemiBold,
     Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,

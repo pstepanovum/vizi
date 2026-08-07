@@ -6,7 +6,7 @@ import { useSpeechInput } from '@/features/audio/use-speech-input';
 import { useSpeechOutput } from '@/features/audio/use-speech-output';
 import { useFrameSampler } from '@/features/camera/use-frame-sampler';
 import { createCompanion } from '@/features/companion/create-companion';
-import { VisionCompanion } from '@/features/companion/types';
+import { CompanionMode, VisionCompanion } from '@/features/companion/types';
 import { SessionStatus } from '@/features/session/session-status';
 
 export function useSessionController(cameraGranted: boolean) {
@@ -15,7 +15,7 @@ export function useSessionController(cameraGranted: boolean) {
   const [status, setStatus] = useState<SessionStatus>('connecting');
   const [muted, setMuted] = useState(false);
   const [caption, setCaption] = useState<string | null>(null);
-  const [mode, setMode] = useState<'live' | 'mock' | null>(null);
+  const [mode, setMode] = useState<CompanionMode | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
   const { speak, stop, repeatLast } = useSpeechOutput();
 

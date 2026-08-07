@@ -5,8 +5,10 @@
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/ui": "~57.0.9",
+    "@react-native-firebase/ai": "^26.1.0",
     "@react-native-firebase/analytics": "^26.1.0",
     "@react-native-firebase/app": "^26.1.0",
+    "@react-native-firebase/app-check": "^26.1.0",
     "@react-native-firebase/auth": "^26.1.0",
     "@react-native-firebase/firestore": "^26.1.0",
     "@react-native-google-signin/google-signin": "^16.1.4",

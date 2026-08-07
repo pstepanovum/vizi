@@ -43,7 +43,9 @@ export default function SessionScreen() {
         </Text>
         <SessionStatusBar status={status} muted={muted} />
         {mode === 'mock' ? (
-          <Text style={styles.modeHint}>Mock companion (set EXPO_PUBLIC_GEMINI_API_KEY for Live)</Text>
+          <Text style={styles.modeHint}>
+            Mock companion — set EXPO_PUBLIC_GEMINI_API_KEY for Live
+          </Text>
         ) : null}
       </View>
 

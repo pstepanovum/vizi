@@ -45,17 +45,30 @@ export function createGeminiLiveCompanion(
       await new Promise<void>((resolve, reject) => {
         const socket = new WebSocket(token.wsUrl);
         ws = socket;
+        let settled = false;
+
+        const settle = (fn: () => void) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          fn();
+        };
 
         const timeout = setTimeout(() => {
-          reject(new Error('Timed out connecting to Gemini Live'));
-          socket.close();
+          settle(() => {
+            reject(new Error('Timed out connecting to Gemini Live'));
+            socket.close();
+          });
         }, 15000);
 
         socket.onopen = () => {
           send({
             setup: {
               model: `models/${token.model}`,
-              responseModalities: ['AUDIO'],
+              generationConfig: {
+                responseModalities: ['AUDIO'],
+              },
               systemInstruction: {
                 parts: [{ text: VIZI_SYSTEM_PROMPT }],
               },
@@ -73,7 +86,7 @@ export function createGeminiLiveCompanion(
               clearTimeout(timeout);
               ready = true;
               events.onStatus('listening');
-              resolve();
+              settle(() => resolve());
               return;
             }
 
@@ -95,6 +108,7 @@ export function createGeminiLiveCompanion(
             }
 
             const textParts = content.modelTurn?.parts
+              ?.filter((part) => part.text && !(part as { thought?: boolean }).thought)
               ?.map((part) => part.text)
               .filter(Boolean)
               .join('');
@@ -121,12 +135,19 @@ export function createGeminiLiveCompanion(
           clearTimeout(timeout);
           const error = new Error('Gemini Live WebSocket error');
           events.onError(error);
-          reject(error);
+          settle(() => reject(error));
         };
 
-        socket.onclose = () => {
+        socket.onclose = (event) => {
           ready = false;
-          if (!closed) {
+          if (!closed && !settled) {
+            clearTimeout(timeout);
+            const reason = event.reason || `code ${event.code}`;
+            const error = new Error(`Gemini Live closed: ${reason}`);
+            events.onError(error);
+            settle(() => reject(error));
+            events.onStatus('error');
+          } else if (!closed && settled && !ready) {
             events.onStatus('error');
           }
         };
