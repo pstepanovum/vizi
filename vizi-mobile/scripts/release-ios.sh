@@ -29,6 +29,9 @@ ASC_KEY_ID="${ASC_KEY_ID:-YJFTFN8T6L}"
 ASC_KEY_PATH="${ASC_KEY_PATH:-$REPO_DIR/vizi-assets/apple/AuthKey_${ASC_KEY_ID}.p8}"
 
 : "${ASC_ISSUER_ID:?Set ASC_ISSUER_ID (App Store Connect > Users and Access > Integrations), or put it in vizi-mobile/scripts/.env.release}"
+# expo prebuild regenerates ios/ without a signing team, so the team is passed
+# to xcodebuild instead of being stored in the (disposable) Xcode project.
+: "${ASC_TEAM_ID:?Set ASC_TEAM_ID (the 10-character Apple Developer Team ID) in vizi-mobile/scripts/.env.release}"
 [ -f "$ASC_KEY_PATH" ] || { echo "API key not found: $ASC_KEY_PATH" >&2; exit 1; }
 
 cd "$APP_DIR"
@@ -52,7 +55,7 @@ EXPORT_PLIST="$APP_DIR/ios/build/export-options.plist"
 mkdir -p "$APP_DIR/ios/build"
 rm -rf "$ARCHIVE_PATH" "$EXPORT_DIR"
 
-cat > "$EXPORT_PLIST" <<'PLIST'
+cat > "$EXPORT_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -60,6 +63,7 @@ cat > "$EXPORT_PLIST" <<'PLIST'
   <key>method</key><string>app-store-connect</string>
   <key>destination</key><string>upload</string>
   <key>signingStyle</key><string>automatic</string>
+  <key>teamID</key><string>${ASC_TEAM_ID}</string>
 </dict>
 </plist>
 PLIST
@@ -74,6 +78,7 @@ AUTH_ARGS=(
 echo "==> Archiving (Release)"
 xcodebuild -workspace ios/Vizi.xcworkspace -scheme Vizi -configuration Release \
   -destination 'generic/platform=iOS' -archivePath "$ARCHIVE_PATH" \
+  DEVELOPMENT_TEAM="$ASC_TEAM_ID" CODE_SIGN_STYLE=Automatic \
   "${AUTH_ARGS[@]}" archive
 
 echo "==> Uploading to App Store Connect"
