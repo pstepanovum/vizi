@@ -44,8 +44,6 @@ export type TranscriptEntry = {
   text: string;
 };
 
-let transcriptId = 0;
-
 export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const [cameraPermission] = useCameraPermissions();
   const [status, setStatus] = useState<SessionStatus>('connecting');
@@ -54,8 +52,12 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
 
   const appendTranscript = useCallback((speaker: 'user' | 'vizi', text: string) => {
-    transcriptId += 1;
-    setTranscript((entries) => [...entries, { id: transcriptId, speaker, text }]);
+    // Derive the id from current state so ids stay unique even across
+    // fast-refresh reloads (a module counter would reset and collide).
+    setTranscript((entries) => [
+      ...entries,
+      { id: (entries[entries.length - 1]?.id ?? 0) + 1, speaker, text },
+    ]);
   }, []);
 
   const historyRef = useRef<ChatTurn[]>([]);
