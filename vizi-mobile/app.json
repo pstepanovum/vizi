@@ -10,7 +10,7 @@
     "backgroundColor": "#F2EAE0",
     "ios": {
       "bundleIdentifier": "com.vizi.mobile.app",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "googleServicesFile": "./google-services/GoogleService-Info.plist",
       "supportsTablet": false,
       "usesAppleSignIn": true,
@@ -38,7 +38,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "versionCode": 2
+      "versionCode": 3
     },
     "plugins": [
       "expo-router",
