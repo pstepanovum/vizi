@@ -30,10 +30,7 @@ Product flow (PRD §5 / §11): **Launch → Live camera → User speaks → Gemi
 vizi/
 ├── PRD.md                 # Product requirements (source of truth)
 ├── TECH_SPEC.md           # This file
-├── AGENTS.md              # Agent onboarding
 ├── README.md              # Human setup / runbook
-├── skills-lock.json       # Expo skills lockfile
-├── .agents/skills/        # Installed Expo / EAS agent skills
 ├── vizi-assets/            # Design tokens, fonts, Apple/Firebase notes (secrets gitignored)
 └── vizi-mobile/           # Expo app (implement here)
     ├── app.json
@@ -51,7 +48,6 @@ vizi/
 
 - Do **not** recreate a second `PRD.md` under `vizi-mobile/`.
 - Follow existing `vizi-mobile/` conventions (`src/app`, kebab-case components). Do not restructure to match generic Expo templates.
-- Agent skills: prefer project `.agents/skills/*` for Expo/EAS procedures.
 
 ---
 

@@ -9,13 +9,11 @@ AI vision companion — point your phone, ask naturally, get spoken answers.
 | [PRD.md](./PRD.md) | Product requirements |
 | [TECH_SPEC.md](./TECH_SPEC.md) | Expo technical specification |
 | [IMPLEMENTATION.md](./IMPLEMENTATION.md) | Phased build plan |
-| [AGENTS.md](./AGENTS.md) | Guidance for coding agents |
 
 ## Repository layout
 
 - **`vizi-mobile/`** — Expo (React Native) app for iOS and Android  
 - **`vizi-assets/`** — design tokens, fonts, platform config notes  
-- **`.agents/skills/`** — [Expo Skills](https://docs.expo.dev/skills/) for AI agents  
 
 ## Prerequisites
 
