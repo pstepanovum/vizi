@@ -2,6 +2,8 @@ import { CameraView as ExpoCameraView } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
+import { IconButton } from '@/components/icon-button';
+import { CHAT_ICON_SVG, MIC_OFF_ICON_SVG, MIC_ON_ICON_SVG } from '@/components/icons';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { CameraView } from '@/features/camera/camera-view';
@@ -38,29 +40,25 @@ export default function SessionScreen() {
       {chatVisible && <ChatTranscript entries={transcript} />}
 
       <View style={styles.footer}>
-        <View style={styles.buttonRow}>
-          <RoundedButton
-            label={muted ? 'Unmute' : 'Mute'}
-            variant="neutral"
-            onPress={() => setMuted((value) => !value)}
-            style={styles.rowButton}
-          />
-          <RoundedButton
-            label={chatVisible ? 'Hide chat' : 'Show chat'}
-            variant="neutral"
-            onPress={() => setChatVisible((value) => !value)}
-            style={styles.rowButton}
-          />
-        </View>
-        <View style={styles.buttonRow}>
-          <RoundedButton
-            label="Repeat answer"
-            variant="neutral"
-            onPress={repeatLastAnswer}
-            style={styles.rowButton}
-          />
-          <RoundedButton label="Ask again" onPress={askAgain} style={styles.rowButton} />
-        </View>
+        <IconButton
+          svg={muted ? MIC_OFF_ICON_SVG : MIC_ON_ICON_SVG}
+          accessibilityLabel={muted ? 'Unmute microphone' : 'Mute microphone'}
+          active={muted}
+          onPress={() => setMuted((value) => !value)}
+        />
+        <RoundedButton
+          label="Repeat"
+          variant="neutral"
+          onPress={repeatLastAnswer}
+          style={styles.rowButton}
+        />
+        <RoundedButton label="Ask again" onPress={askAgain} style={styles.rowButton} />
+        <IconButton
+          svg={CHAT_ICON_SVG}
+          accessibilityLabel={chatVisible ? 'Hide chat' : 'Show chat'}
+          active={chatVisible}
+          onPress={() => setChatVisible((value) => !value)}
+        />
       </View>
     </Screen>
   );
@@ -78,10 +76,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: spacing.lg,
-    gap: spacing.sm,
-  },
-  buttonRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   rowButton: {
