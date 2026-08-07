@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { type PurchasesPackage } from 'react-native-purchases';
 
-import { MASCOT_SVG, svgToDataUri, UNLOCK_ICON_SVG } from '@/components/icons';
+import { CHECK_ICON_SVG, MASCOT_SVG, svgToDataUri, UNLOCK_ICON_SVG } from '@/components/icons';
 import { PAYWALL_PATTERN_SVG } from '@/components/paywall-pattern';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
@@ -92,9 +92,16 @@ export default function PaywallScreen() {
         </Text>
         <View style={styles.benefits}>
           {benefits.map((benefit) => (
-            <Text key={benefit} style={styles.benefit}>
-              {benefit}
-            </Text>
+            <View key={benefit} style={styles.benefitRow}>
+              <Image
+                source={{ uri: svgToDataUri(CHECK_ICON_SVG) }}
+                style={styles.benefitIcon}
+                contentFit="contain"
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+              />
+              <Text style={styles.benefit}>{benefit}</Text>
+            </View>
           ))}
         </View>
         {packages.length > 0 ? (
@@ -188,9 +195,19 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  benefitIcon: {
+    width: 22,
+    height: 22,
+  },
   benefit: {
     ...typography.body,
     color: colors.text,
+    flexShrink: 1,
   },
   caption: {
     ...typography.caption,
