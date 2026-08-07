@@ -31,6 +31,10 @@ const RECENT_SPEECH_WINDOW_MS = 4000;
 // turn never waits on the camera.
 const FRAME_SAMPLE_INTERVAL_MS = 2500;
 const FRAME_FRESHNESS_MS = 5000;
+// Recognition lags playback — Vizi's own words can be transcribed up to this
+// long after its audio stopped. Anything echo-like inside the window is
+// discarded.
+const ECHO_TAIL_MS = 2000;
 // Ambient narration is skipped when the sampled JPEG size is within this
 // ratio of the last-described frame — same scene produces near-identical
 // sizes, a new scene shifts them well beyond it.
@@ -72,19 +76,46 @@ function stripAudioTags(text: string): string {
   return text.replace(/\((?:break|long-break|breath)\)\s?/gi, '').trim();
 }
 
-// Echo guard for barge-in: with hardware AEC the mic should not hear Vizi,
-// but if fragments leak through, ignore transcripts that are just pieces of
-// what Vizi is currently saying.
-function looksLikeEcho(transcript: string, speakingText: string | null): boolean {
-  if (!speakingText) {
+function normalizeSpeech(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Echo guard: hardware AEC reduces how much of Vizi's own voice reaches the
+// mic, but fragments leak through (and full sentences can arrive with a ~1s
+// recognition delay, after playback already ended). Treat any transcript that
+// is a piece of what Vizi recently said as echo.
+function looksLikeEcho(transcript: string, spokenText: string | null): boolean {
+  if (!spokenText) {
     return false;
   }
-  const normalize = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').trim();
-  const heard = normalize(transcript);
+  const heard = normalizeSpeech(transcript);
   if (heard.length < 4) {
     return true;
   }
-  return normalize(speakingText).includes(heard);
+  return normalizeSpeech(spokenText).includes(heard);
+}
+
+// New words in `full` beyond the already-consumed `base`, compared on
+// normalized words so iOS punctuation/casing revisions don't break alignment.
+function transcriptDelta(base: string, full: string): string {
+  if (!base) {
+    return full.trim();
+  }
+  const baseWords = normalizeSpeech(base).split(' ').filter(Boolean);
+  const fullNorm = normalizeSpeech(full).split(' ').filter(Boolean);
+  const fullRaw = full.split(/\s+/).filter(Boolean);
+  if (
+    fullNorm.length >= baseWords.length &&
+    baseWords.every((word, i) => fullNorm[i] === word)
+  ) {
+    return fullRaw.slice(baseWords.length).join(' ').trim();
+  }
+  // Recognizer revised earlier words — fall back to treating it all as new.
+  return full.trim();
 }
 
 type VoiceAgentOptions = {
@@ -123,6 +154,8 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const startingRef = useRef(false);
   const eagerEndpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingTextRef = useRef<string | null>(null);
+  const lastSpokenRef = useRef<{ text: string; expiresAt: number } | null>(null);
+  const prevUtteranceBaseRef = useRef('');
   const lastAnswerRef = useRef<string | null>(null);
   const narrationPausedRef = useRef(false);
   const lastDescribedFrameSizeRef = useRef<number | null>(null);
@@ -242,6 +275,13 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   const stopPlayback = useCallback(() => {
     Speech.stop();
+    if (speakingTextRef.current) {
+      // Echo of what was already played may still arrive from the recognizer.
+      lastSpokenRef.current = {
+        text: speakingTextRef.current,
+        expiresAt: Date.now() + ECHO_TAIL_MS,
+      };
+    }
     speakingTextRef.current = null;
     const player = playerRef.current;
     playerRef.current = null;
@@ -310,7 +350,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     async (text: string) => {
       stopPlayback();
       setStatus('speaking');
-      speakingTextRef.current = text;
+      // Store the tag-stripped version — echo comparisons run against what is
+      // actually audible, and the (break)/(breath) tags are not spoken.
+      speakingTextRef.current = stripAudioTags(text);
       if (hasFishAudioKey()) {
         try {
           const uri = await synthesizeSpeech(text);
@@ -321,6 +363,12 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
             if (playbackStatus.didJustFinish && playerRef.current === player) {
               log('Fish Audio playback finished');
               playerRef.current = null;
+              if (speakingTextRef.current) {
+                lastSpokenRef.current = {
+                  text: speakingTextRef.current,
+                  expiresAt: Date.now() + ECHO_TAIL_MS,
+                };
+              }
               speakingTextRef.current = null;
               player.release();
               startListening();
@@ -436,11 +484,11 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   // start/stop sounds and no dead time between turns.
   const consumeUtterance = useCallback(
     (fullTranscript: string) => {
-      const base = utteranceBaseRef.current;
-      const effective =
-        base && fullTranscript.toLowerCase().startsWith(base.toLowerCase())
-          ? fullTranscript.slice(base.length).trim()
-          : fullTranscript.trim();
+      const effective = transcriptDelta(utteranceBaseRef.current, fullTranscript);
+      // Remember the pre-consume base: if the user keeps talking while this
+      // turn is thinking, the turn is canceled and the base rolls back so the
+      // next consume includes the whole utterance, not just the tail fragment.
+      prevUtteranceBaseRef.current = utteranceBaseRef.current;
       utteranceBaseRef.current = fullTranscript;
       if (!effective) {
         return;
@@ -468,18 +516,27 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   useSpeechRecognitionEvent('result', (event) => {
     const full = event.results?.[0]?.transcript ?? '';
-    const base = utteranceBaseRef.current;
-    const effective =
-      base && full.toLowerCase().startsWith(base.toLowerCase())
-        ? full.slice(base.length).trim()
-        : full.trim();
+    const effective = transcriptDelta(utteranceBaseRef.current, full);
+    if (!effective) {
+      return;
+    }
+
+    // Echo rejection, in every state. While speaking, compare against the
+    // current answer; afterwards, against the recently finished one (its
+    // transcription arrives with up to ~1-2s delay). Echo words are consumed
+    // into the base so they can never accumulate into future utterances.
+    const tail = lastSpokenRef.current;
+    const echoSource =
+      speakingTextRef.current ?? (tail && Date.now() < tail.expiresAt ? tail.text : null);
+    if (echoSource && looksLikeEcho(effective, echoSource)) {
+      utteranceBaseRef.current = full;
+      log(`ignored own-voice echo: "${effective.slice(0, 60)}"`);
+      return;
+    }
 
     if (statusRef.current === 'speaking') {
       // Barge-in: the user talked over Vizi. Cut playback, note the
       // interruption in history so the model knows its answer was cut short.
-      if (!effective || looksLikeEcho(effective, speakingTextRef.current)) {
-        return;
-      }
       log(`barge-in: "${effective}"`);
       turnIdRef.current += 1;
       stopPlayback();
@@ -493,12 +550,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       setStatus('listening');
     } else if (statusRef.current === 'thinking') {
       // The user spoke again before the answer arrived — cancel the in-flight
-      // turn and treat this as the start of a new utterance.
-      if (!effective) {
-        return;
-      }
+      // turn, roll the consume back, and let the utterance rebuild whole.
       log('user spoke while thinking — canceling in-flight turn');
       turnIdRef.current += 1;
+      utteranceBaseRef.current = prevUtteranceBaseRef.current;
       setStatus('listening');
     } else if (statusRef.current !== 'listening') {
       return;
