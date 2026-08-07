@@ -126,7 +126,7 @@ export function SlideCanvas({
               margin: 0,
               fontFamily: 'Poppins',
               fontWeight: 400,
-              fontSize: device.captionSize * 0.4,
+              fontSize: device.captionSize * 0.5,
               lineHeight: 1.35,
               textAlign: 'center',
               color: captionColor,
