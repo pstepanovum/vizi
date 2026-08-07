@@ -18,6 +18,8 @@
         "NSCameraUsageDescription": "Vizi uses the camera to see and describe the world around you.",
         "NSMicrophoneUsageDescription": "Vizi uses the microphone so you can talk to your assistant.",
         "NSSpeechRecognitionUsageDescription": "Vizi converts your speech to text to understand your questions.",
+        "NSPhotoLibraryUsageDescription": "Vizi does not use your photo library. The camera is used only to describe what is in front of you, and images are never saved.",
+        "NSPhotoLibraryAddUsageDescription": "Vizi does not save anything to your photo library.",
         "UIBackgroundModes": [
           "audio"
         ]
