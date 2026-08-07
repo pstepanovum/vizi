@@ -33,9 +33,31 @@ const FRAME_FRESHNESS_MS = 5000;
 // blips to the dictation service). Only surface "error" after this many in a
 // row — isolated ones just restart quietly.
 const MAX_CONSECUTIVE_RECOGNITION_ERRORS = 3;
+// Eager endpointing: Apple waits 800-1500ms of silence before finalizing a
+// transcript. If interim results stop changing for this long, force
+// finalization ourselves — OpenAI's realtime default silence window is 500ms.
+const EAGER_ENDPOINT_MS = 650;
+// How long to wait for an in-flight pre-captured frame before falling back to
+// the rolling sampled frame.
+const PENDING_FRAME_GRACE_MS = 120;
 
 function log(...parts: unknown[]) {
   console.log('[vizi:agent]', ...parts);
+}
+
+// Preloaded "heard you" earcon — fires the instant a turn starts so the user
+// gets sub-150ms acknowledgment even while the model thinks. For blind users
+// the visual "Thinking…" pill is no feedback at all; this is the accessibility
+// pattern Siri/Alexa use.
+const ackPlayer = createAudioPlayer(require('../../../assets/sounds/ack.wav'));
+
+function playAck() {
+  try {
+    ackPlayer.seekTo(0);
+    ackPlayer.play();
+  } catch {
+    // Earcon is best-effort — never let it break a turn.
+  }
 }
 
 type VoiceAgentOptions = {
@@ -71,6 +93,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const latestFrameRef = useRef<{ base64: string; capturedAt: number } | null>(null);
   const describeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const eagerEndpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRunningRef = useRef(false);
   const recognitionErrorsRef = useRef(0);
   const lastSpeechAtRef = useRef(0);
@@ -117,17 +140,25 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     }
   }, []);
 
+  const clearEagerEndpoint = useCallback(() => {
+    if (eagerEndpointTimerRef.current) {
+      clearTimeout(eagerEndpointTimerRef.current);
+      eagerEndpointTimerRef.current = null;
+    }
+  }, []);
+
   const stopListening = useCallback(() => {
     if (restartTimerRef.current) {
       clearTimeout(restartTimerRef.current);
       restartTimerRef.current = null;
     }
+    clearEagerEndpoint();
     try {
       ExpoSpeechRecognitionModule.stop();
     } catch {
       // Recognizer may already be stopped — nothing to do.
     }
-  }, []);
+  }, [clearEagerEndpoint]);
 
   // Single funnel for restarting recognition — prevents the "end" and error
   // handlers from double-starting the recognizer (which itself errors).
@@ -212,9 +243,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     async (text: string) => {
       stopPlayback();
       setStatus('speaking');
-      // Recognition has stopped by now; switch the session to pure playback so
-      // iOS uses the loudspeaker at full volume.
-      await setAudioModeAsync({
+      // Session switch is pre-armed in runTurn; fire again non-blocking to
+      // cover the repeat/ask-again paths that bypass runTurn.
+      setAudioModeAsync({
         playsInSilentMode: true,
         allowsRecording: false,
         interruptionMode: 'doNotMix',
@@ -248,12 +279,23 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     async (question: string, { ambient = false } = {}) => {
       stopListening();
       setStatus('thinking');
+      if (!ambient) {
+        // Instant "heard you" feedback while the model works.
+        playAck();
+      }
+      // Pre-arm the playback audio session now — it completes during the
+      // Gemini wait instead of delaying the first audio.
+      setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        interruptionMode: 'doNotMix',
+      }).catch(() => {});
       log(`turn started (${ambient ? 'ambient description' : 'user question'}): "${question}"`);
       const turnStartedAt = Date.now();
       try {
-        // Frame priority: one pre-captured while the user was speaking, else the
-        // continuously-sampled latest frame if fresh, else capture now. The first
-        // two make the turn start with zero camera wait.
+        // Frame priority: one pre-captured while the user was speaking (raced
+        // against a short grace window so a slow capture can't stall the turn),
+        // else the continuously-sampled latest frame if fresh, else capture now.
         const pendingFrame = pendingFrameRef.current;
         pendingFrameRef.current = null;
         const sampled = latestFrameRef.current;
@@ -261,7 +303,15 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           sampled && Date.now() - sampled.capturedAt < FRAME_FRESHNESS_MS
             ? sampled.base64
             : undefined;
-        const frameBase64 = (await pendingFrame) ?? sampledFresh ?? (await captureFrame());
+        const racedPending = pendingFrame
+          ? await Promise.race([
+              pendingFrame,
+              new Promise<undefined>((resolve) =>
+                setTimeout(() => resolve(undefined), sampledFresh ? PENDING_FRAME_GRACE_MS : 5000),
+              ),
+            ])
+          : undefined;
+        const frameBase64 = racedPending ?? sampledFresh ?? (await captureFrame());
         const answer = await askGemini({
           question,
           frameBase64,
@@ -302,15 +352,33 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     recognitionErrorsRef.current = 0;
     const transcript = event.results?.[0]?.transcript?.trim();
     if (event.isFinal && transcript) {
+      clearEagerEndpoint();
       log(`heard: "${transcript}"`);
       runTurn(transcript);
       return;
     }
-    // User started talking — grab a frame now so it's ready by the time
-    // they finish the question.
-    if (transcript && !pendingFrameRef.current) {
-      log('pre-capturing frame while user speaks');
-      pendingFrameRef.current = captureFrame();
+    if (transcript) {
+      // User is talking — grab a frame now so it's ready by the time they
+      // finish the question.
+      if (!pendingFrameRef.current) {
+        log('pre-capturing frame while user speaks');
+        pendingFrameRef.current = captureFrame();
+      }
+      // Eager endpointing: if the interim transcript stops changing for
+      // EAGER_ENDPOINT_MS, force finalization instead of waiting out Apple's
+      // longer built-in silence window. stop() makes isFinal fire promptly.
+      clearEagerEndpoint();
+      eagerEndpointTimerRef.current = setTimeout(() => {
+        eagerEndpointTimerRef.current = null;
+        if (statusRef.current === 'listening') {
+          log('eager endpoint — forcing finalization');
+          try {
+            ExpoSpeechRecognitionModule.stop();
+          } catch {
+            // Recognizer already stopping.
+          }
+        }
+      }, EAGER_ENDPOINT_MS);
     }
   });
 

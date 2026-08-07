@@ -29,7 +29,16 @@ export function CameraView({ cameraRef }: CameraViewProps) {
 
   return (
     <CameraFrame>
-      <ExpoCameraView ref={cameraRef} style={styles.camera} facing="back" animateShutter={false} />
+      <ExpoCameraView
+        ref={cameraRef}
+        style={styles.camera}
+        facing="back"
+        animateShutter={false}
+        // Full-sensor stills are ~1MB+ of base64 per turn; Gemini downsamples
+        // to 768px tiles anyway. 720p keeps label text readable and cuts
+        // upload time by 3-5x on cellular.
+        pictureSize="1280x720"
+      />
     </CameraFrame>
   );
 }
