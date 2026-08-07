@@ -30,10 +30,25 @@ type VoiceAgentOptions = {
   muted: boolean;
 };
 
+export type TranscriptEntry = {
+  id: number;
+  speaker: 'user' | 'vizi';
+  text: string;
+};
+
+let transcriptId = 0;
+
 export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const [cameraPermission] = useCameraPermissions();
   const [status, setStatus] = useState<SessionStatus>('connecting');
   const [lastAnswer, setLastAnswer] = useState<string | null>(null);
+  const [lastQuestion, setLastQuestion] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
+
+  const appendTranscript = useCallback((speaker: 'user' | 'vizi', text: string) => {
+    transcriptId += 1;
+    setTranscript((entries) => [...entries, { id: transcriptId, speaker, text }]);
+  }, []);
 
   const historyRef = useRef<ChatTurn[]>([]);
   const playerRef = useRef<AudioPlayer | null>(null);
@@ -204,6 +219,11 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         ];
         historyRef.current = [...historyRef.current, ...newTurns].slice(-MAX_HISTORY_TURNS);
         setLastAnswer(answer);
+        if (!ambient) {
+          setLastQuestion(question);
+          appendTranscript('user', question);
+        }
+        appendTranscript('vizi', answer);
         log(`turn answered in ${Date.now() - turnStartedAt}ms`);
         await speak(answer);
       } catch (error) {
@@ -217,7 +237,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         await speak('Sorry, I could not process that. Please try again.');
       }
     },
-    [captureFrame, speak, startListening, stopListening],
+    [appendTranscript, captureFrame, speak, startListening, stopListening],
   );
 
   useSpeechRecognitionEvent('result', (event) => {
@@ -342,15 +362,17 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     speak(lastAnswer);
   }, [lastAnswer, speak, stopListening]);
 
-  const reconnect = useCallback(() => {
-    log('reconnect requested — resetting session');
+  // Re-run the last question against whatever the camera sees right now.
+  const askAgain = useCallback(() => {
+    log('ask-again requested');
     stopPlayback();
-    stopListening();
-    historyRef.current = [];
-    hasDescribedRef.current = false;
-    setStatus('connecting');
-    startListening();
-  }, [startListening, stopListening, stopPlayback]);
+    if (!lastQuestion) {
+      stopListening();
+      speak('You have not asked anything yet. Just speak your question.');
+      return;
+    }
+    runTurn(lastQuestion);
+  }, [lastQuestion, runTurn, speak, stopListening, stopPlayback]);
 
-  return { status, lastAnswer, repeatLastAnswer, reconnect };
+  return { status, lastAnswer, repeatLastAnswer, askAgain, transcript };
 }

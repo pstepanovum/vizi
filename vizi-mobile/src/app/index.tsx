@@ -5,6 +5,7 @@ import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { CameraView } from '@/features/camera/camera-view';
+import { ChatTranscript } from '@/features/session/chat-transcript';
 import { SessionStatusBar } from '@/features/session/session-status-bar';
 import { statusAnnouncement } from '@/features/session/session-status';
 import { useVoiceAgent } from '@/features/voice/use-voice-agent';
@@ -13,7 +14,8 @@ import { colors, spacing, typography } from '@/theme';
 export default function SessionScreen() {
   const cameraRef = useRef<ExpoCameraView | null>(null);
   const [muted, setMuted] = useState(false);
-  const { status, repeatLastAnswer, reconnect } = useVoiceAgent({ cameraRef, muted });
+  const [chatVisible, setChatVisible] = useState(false);
+  const { status, repeatLastAnswer, askAgain, transcript } = useVoiceAgent({ cameraRef, muted });
 
   useEffect(() => {
     if (status === 'connecting') {
@@ -33,20 +35,32 @@ export default function SessionScreen() {
 
       <CameraView cameraRef={cameraRef} />
 
+      {chatVisible && <ChatTranscript entries={transcript} />}
+
       <View style={styles.footer}>
-        <RoundedButton
-          label={muted ? 'Unmute microphone' : 'Mute microphone'}
-          variant="neutral"
-          onPress={() => setMuted((value) => !value)}
-          style={styles.footerButton}
-        />
-        <RoundedButton
-          label="Repeat last answer"
-          variant="neutral"
-          onPress={repeatLastAnswer}
-          style={styles.footerButton}
-        />
-        <RoundedButton label="Reconnect" onPress={reconnect} />
+        <View style={styles.buttonRow}>
+          <RoundedButton
+            label={muted ? 'Unmute' : 'Mute'}
+            variant="neutral"
+            onPress={() => setMuted((value) => !value)}
+            style={styles.rowButton}
+          />
+          <RoundedButton
+            label={chatVisible ? 'Hide chat' : 'Show chat'}
+            variant="neutral"
+            onPress={() => setChatVisible((value) => !value)}
+            style={styles.rowButton}
+          />
+        </View>
+        <View style={styles.buttonRow}>
+          <RoundedButton
+            label="Repeat answer"
+            variant="neutral"
+            onPress={repeatLastAnswer}
+            style={styles.rowButton}
+          />
+          <RoundedButton label="Ask again" onPress={askAgain} style={styles.rowButton} />
+        </View>
       </View>
     </Screen>
   );
@@ -66,7 +80,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     gap: spacing.sm,
   },
-  footerButton: {
-    alignSelf: 'stretch',
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  rowButton: {
+    flex: 1,
   },
 });
