@@ -14,6 +14,7 @@ import { SessionStatusBar } from '@/features/session/session-status-bar';
 import { statusAnnouncement } from '@/features/session/session-status';
 import { useVoiceAgent } from '@/features/voice/use-voice-agent';
 import { useAuthUser } from '@/lib/auth';
+import { identifyPurchaser } from '@/lib/purchases';
 import { t } from '@/lib/i18n';
 import { colors, spacing, typography } from '@/theme';
 
@@ -21,6 +22,13 @@ import { colors, spacing, typography } from '@/theme';
 // Google, or guest). Split from SessionScreen so hooks stay unconditional.
 export default function IndexScreen() {
   const user = useAuthUser();
+
+  // Keep the RevenueCat purchaser identity in sync with the Firebase account.
+  useEffect(() => {
+    if (user !== undefined) {
+      identifyPurchaser(user?.uid ?? null);
+    }
+  }, [user]);
 
   if (user === undefined) {
     return <Screen />;

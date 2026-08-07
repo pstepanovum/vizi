@@ -9,6 +9,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { configurePurchases } from '@/lib/purchases';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -20,6 +21,10 @@ export default function RootLayout() {
     Poppins_500Medium,
     Poppins_600SemiBold,
   });
+
+  useEffect(() => {
+    configurePurchases();
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded) {
