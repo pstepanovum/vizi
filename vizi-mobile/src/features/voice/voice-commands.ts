@@ -65,6 +65,13 @@ function normalize(text: string): string {
     .trim();
 }
 
+// Whole-phrase, word-boundary containment: "OK stop talking" matches "stop
+// talking"; "stopwatch" does not match "stop".
+function containsPhrase(heard: string, phrase: string): boolean {
+  const words = ` ${heard} `;
+  return words.includes(` ${normalize(phrase)} `);
+}
+
 // Only short utterances qualify as commands — "stop at the next corner and
 // tell me what you see" must go to the model, not the stop intent.
 export function matchVoiceCommand(transcript: string): VoiceCommand | null {
@@ -72,10 +79,10 @@ export function matchVoiceCommand(transcript: string): VoiceCommand | null {
   if (!heard || heard.split(' ').length > 4) {
     return null;
   }
-  if (STOP_PHRASES.some((p) => heard === normalize(p))) {
+  if (STOP_PHRASES.some((p) => containsPhrase(heard, p))) {
     return 'stop';
   }
-  if (REPEAT_PHRASES.some((p) => heard === normalize(p))) {
+  if (REPEAT_PHRASES.some((p) => containsPhrase(heard, p))) {
     return 'repeat';
   }
   return null;

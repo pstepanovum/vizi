@@ -115,6 +115,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const latestFrameRef = useRef<{ base64: string; capturedAt: number } | null>(null);
   const describeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startingRef = useRef(false);
   const eagerEndpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingTextRef = useRef<string | null>(null);
   const lastAnswerRef = useRef<string | null>(null);
@@ -132,12 +133,13 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       log('startListening skipped — microphone muted');
       return;
     }
-    if (recognitionRunningRef.current) {
+    if (recognitionRunningRef.current || startingRef.current) {
       if (!forBargeIn && statusRef.current !== 'listening') {
         setStatus('listening');
       }
       return;
     }
+    startingRef.current = true;
     try {
       const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!permission.granted) {
@@ -145,22 +147,21 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         setStatus('needs_permission');
         return;
       }
+      // One constant audio session for the whole conversation — same category,
+      // same voice processing, every start. This is how realtime agents keep a
+      // steady output level: iOS never reconfigures the session, so the volume
+      // never shifts when the mic engages. (Voice processing = hardware echo
+      // cancellation, so the barge-in listener never hears Vizi itself.)
       ExpoSpeechRecognitionModule.start({
         ...(SPEECH_LANG ? { lang: SPEECH_LANG } : {}),
         interimResults: true,
-        continuous: false,
-        // Keep output on the loudspeaker while the mic session is active —
-        // without defaultToSpeaker, iOS routes playback to the earpiece.
+        continuous: true,
         iosCategory: {
           category: 'playAndRecord',
           categoryOptions: ['defaultToSpeaker', 'allowBluetooth'],
           mode: 'default',
         },
-        // Hardware echo cancellation — only while Vizi is speaking (the
-        // barge-in listener). Voice processing applies aggressive AGC that
-        // audibly pumps ("bounces") the output level, so keep it off during
-        // normal listening where there is nothing to echo-cancel.
-        iosVoiceProcessingEnabled: forBargeIn,
+        iosVoiceProcessingEnabled: true,
       });
       recognitionRunningRef.current = true;
       log(forBargeIn ? 'barge-in listener started' : 'listening started');
@@ -172,6 +173,8 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       if (!forBargeIn) {
         setStatus('error');
       }
+    } finally {
+      startingRef.current = false;
     }
   }, []);
 
