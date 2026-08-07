@@ -13,6 +13,7 @@
       "buildNumber": "1",
       "googleServicesFile": "./google-services/GoogleService-Info.plist",
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Vizi uses the camera to see and describe the world around you.",
         "NSMicrophoneUsageDescription": "Vizi uses the microphone so you can talk to your assistant.",
@@ -69,7 +70,8 @@
       ],
       "expo-asset",
       "./plugins/with-firebase-cocoapods.js",
-      "expo-speech-recognition"
+      "expo-speech-recognition",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,

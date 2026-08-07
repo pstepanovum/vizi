@@ -32,6 +32,15 @@ type Strings = {
   agentError: string;
   noAnswerYet: string;
   noQuestionYet: string;
+  accountTitle: string;
+  accountSubtitle: string;
+  continueApple: string;
+  continueGoogle: string;
+  continueGuest: string;
+  signOut: string;
+  signedInAs: string;
+  openCamera: string;
+  authError: string;
 };
 
 const en: Strings = {
@@ -61,6 +70,15 @@ const en: Strings = {
   agentError: 'Sorry, I could not process that. Please try again.',
   noAnswerYet: 'I have not answered anything yet. Ask me a question.',
   noQuestionYet: 'You have not asked anything yet. Just speak your question.',
+  accountTitle: 'Welcome to Vizi',
+  accountSubtitle: 'Create an account to keep your settings and history.',
+  continueApple: 'Continue with Apple',
+  continueGoogle: 'Continue with Google',
+  continueGuest: 'Continue as guest',
+  signOut: 'Sign out',
+  signedInAs: 'Signed in as',
+  openCamera: 'Open camera',
+  authError: 'Sign-in failed. Please try again.',
 };
 
 const translations: Record<string, Strings> = {
@@ -92,6 +110,15 @@ const translations: Record<string, Strings> = {
     agentError: 'Lo siento, no pude procesar eso. Inténtalo de nuevo.',
     noAnswerYet: 'Aún no he respondido nada. Hazme una pregunta.',
     noQuestionYet: 'Aún no has preguntado nada. Simplemente di tu pregunta.',
+    accountTitle: 'Bienvenido a Vizi',
+    accountSubtitle: 'Crea una cuenta para guardar tus ajustes y tu historial.',
+    continueApple: 'Continuar con Apple',
+    continueGoogle: 'Continuar con Google',
+    continueGuest: 'Continuar como invitado',
+    signOut: 'Cerrar sesión',
+    signedInAs: 'Sesión iniciada como',
+    openCamera: 'Abrir cámara',
+    authError: 'Error al iniciar sesión. Inténtalo de nuevo.',
   },
   fr: {
     statusNeedsPermission: 'Accès à la caméra requis',
@@ -120,6 +147,15 @@ const translations: Record<string, Strings> = {
     agentError: 'Désolé, je n’ai pas pu traiter cela. Veuillez réessayer.',
     noAnswerYet: 'Je n’ai encore rien répondu. Posez-moi une question.',
     noQuestionYet: 'Vous n’avez encore rien demandé. Dites simplement votre question.',
+    accountTitle: 'Bienvenue sur Vizi',
+    accountSubtitle: 'Créez un compte pour conserver vos réglages et votre historique.',
+    continueApple: 'Continuer avec Apple',
+    continueGoogle: 'Continuer avec Google',
+    continueGuest: 'Continuer en invité',
+    signOut: 'Se déconnecter',
+    signedInAs: 'Connecté en tant que',
+    openCamera: 'Ouvrir la caméra',
+    authError: 'Échec de la connexion. Veuillez réessayer.',
   },
   de: {
     statusNeedsPermission: 'Kamerazugriff erforderlich',
@@ -148,6 +184,15 @@ const translations: Record<string, Strings> = {
     agentError: 'Entschuldigung, das konnte ich nicht verarbeiten. Bitte versuche es erneut.',
     noAnswerYet: 'Ich habe noch nichts beantwortet. Stelle mir eine Frage.',
     noQuestionYet: 'Du hast noch nichts gefragt. Sprich einfach deine Frage aus.',
+    accountTitle: 'Willkommen bei Vizi',
+    accountSubtitle: 'Erstelle ein Konto, um Einstellungen und Verlauf zu behalten.',
+    continueApple: 'Weiter mit Apple',
+    continueGoogle: 'Weiter mit Google',
+    continueGuest: 'Als Gast fortfahren',
+    signOut: 'Abmelden',
+    signedInAs: 'Angemeldet als',
+    openCamera: 'Kamera öffnen',
+    authError: 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
   },
   it: {
     statusNeedsPermission: 'Accesso alla fotocamera necessario',
@@ -176,6 +221,15 @@ const translations: Record<string, Strings> = {
     agentError: 'Scusa, non sono riuscito a elaborarlo. Riprova.',
     noAnswerYet: 'Non ho ancora risposto a nulla. Fammi una domanda.',
     noQuestionYet: 'Non hai ancora chiesto nulla. Di’ semplicemente la tua domanda.',
+    accountTitle: 'Benvenuto su Vizi',
+    accountSubtitle: 'Crea un account per conservare impostazioni e cronologia.',
+    continueApple: 'Continua con Apple',
+    continueGoogle: 'Continua con Google',
+    continueGuest: 'Continua come ospite',
+    signOut: 'Esci',
+    signedInAs: 'Accesso come',
+    openCamera: 'Apri fotocamera',
+    authError: 'Accesso non riuscito. Riprova.',
   },
   pt: {
     statusNeedsPermission: 'Acesso à câmera necessário',
@@ -204,6 +258,15 @@ const translations: Record<string, Strings> = {
     agentError: 'Desculpe, não consegui processar isso. Tente novamente.',
     noAnswerYet: 'Ainda não respondi nada. Faça-me uma pergunta.',
     noQuestionYet: 'Você ainda não perguntou nada. Basta dizer sua pergunta.',
+    accountTitle: 'Bem-vindo ao Vizi',
+    accountSubtitle: 'Crie uma conta para manter suas configurações e histórico.',
+    continueApple: 'Continuar com Apple',
+    continueGoogle: 'Continuar com Google',
+    continueGuest: 'Continuar como convidado',
+    signOut: 'Sair',
+    signedInAs: 'Conectado como',
+    openCamera: 'Abrir câmera',
+    authError: 'Falha ao entrar. Tente novamente.',
   },
   ru: {
     statusNeedsPermission: 'Нужен доступ к камере',
@@ -232,6 +295,15 @@ const translations: Record<string, Strings> = {
     agentError: 'Извините, не удалось это обработать. Попробуйте ещё раз.',
     noAnswerYet: 'Я ещё ничего не ответил. Задайте мне вопрос.',
     noQuestionYet: 'Вы ещё ничего не спросили. Просто произнесите свой вопрос.',
+    accountTitle: 'Добро пожаловать в Vizi',
+    accountSubtitle: 'Создайте аккаунт, чтобы сохранить настройки и историю.',
+    continueApple: 'Продолжить с Apple',
+    continueGoogle: 'Продолжить с Google',
+    continueGuest: 'Продолжить как гость',
+    signOut: 'Выйти',
+    signedInAs: 'Вы вошли как',
+    openCamera: 'Открыть камеру',
+    authError: 'Не удалось войти. Попробуйте ещё раз.',
   },
   uk: {
     statusNeedsPermission: 'Потрібен доступ до камери',
@@ -260,6 +332,15 @@ const translations: Record<string, Strings> = {
     agentError: 'Вибачте, не вдалося це опрацювати. Спробуйте ще раз.',
     noAnswerYet: 'Я ще нічого не відповів. Поставте мені запитання.',
     noQuestionYet: 'Ви ще нічого не запитали. Просто скажіть своє запитання.',
+    accountTitle: 'Ласкаво просимо до Vizi',
+    accountSubtitle: 'Створіть акаунт, щоб зберегти налаштування та історію.',
+    continueApple: 'Продовжити з Apple',
+    continueGoogle: 'Продовжити з Google',
+    continueGuest: 'Продовжити як гість',
+    signOut: 'Вийти',
+    signedInAs: 'Ви увійшли як',
+    openCamera: 'Відкрити камеру',
+    authError: 'Не вдалося увійти. Спробуйте ще раз.',
   },
   zh: {
     statusNeedsPermission: '需要相机权限',
@@ -288,6 +369,15 @@ const translations: Record<string, Strings> = {
     agentError: '抱歉，我无法处理。请再试一次。',
     noAnswerYet: '我还没有回答过任何问题。请向我提问。',
     noQuestionYet: '你还没有提问。直接说出你的问题即可。',
+    accountTitle: '欢迎使用 Vizi',
+    accountSubtitle: '创建账户以保存你的设置和历史记录。',
+    continueApple: '通过 Apple 继续',
+    continueGoogle: '通过 Google 继续',
+    continueGuest: '以访客身份继续',
+    signOut: '退出登录',
+    signedInAs: '已登录为',
+    openCamera: '打开相机',
+    authError: '登录失败，请重试。',
   },
   ja: {
     statusNeedsPermission: 'カメラへのアクセスが必要です',
@@ -316,6 +406,15 @@ const translations: Record<string, Strings> = {
     agentError: 'すみません、処理できませんでした。もう一度お試しください。',
     noAnswerYet: 'まだ何も答えていません。質問してください。',
     noQuestionYet: 'まだ何も質問していません。質問を話してください。',
+    accountTitle: 'Viziへようこそ',
+    accountSubtitle: 'アカウントを作成して設定と履歴を保存しましょう。',
+    continueApple: 'Appleで続ける',
+    continueGoogle: 'Googleで続ける',
+    continueGuest: 'ゲストとして続ける',
+    signOut: 'サインアウト',
+    signedInAs: 'サインイン中:',
+    openCamera: 'カメラを開く',
+    authError: 'サインインに失敗しました。もう一度お試しください。',
   },
   ko: {
     statusNeedsPermission: '카메라 접근 권한 필요',
@@ -344,6 +443,15 @@ const translations: Record<string, Strings> = {
     agentError: '죄송해요, 처리할 수 없었어요. 다시 시도해 주세요.',
     noAnswerYet: '아직 답변한 것이 없어요. 질문해 주세요.',
     noQuestionYet: '아직 질문하지 않았어요. 질문을 말씀해 주세요.',
+    accountTitle: 'Vizi에 오신 것을 환영해요',
+    accountSubtitle: '계정을 만들어 설정과 기록을 저장하세요.',
+    continueApple: 'Apple로 계속',
+    continueGoogle: 'Google로 계속',
+    continueGuest: '게스트로 계속',
+    signOut: '로그아웃',
+    signedInAs: '로그인 계정:',
+    openCamera: '카메라 열기',
+    authError: '로그인에 실패했어요. 다시 시도해 주세요.',
   },
   ar: {
     statusNeedsPermission: 'مطلوب إذن الكاميرا',
@@ -372,6 +480,15 @@ const translations: Record<string, Strings> = {
     agentError: 'عذرًا، لم أتمكن من معالجة ذلك. حاول مرة أخرى.',
     noAnswerYet: 'لم أجب على أي شيء بعد. اطرح عليّ سؤالاً.',
     noQuestionYet: 'لم تسأل شيئًا بعد. فقط قل سؤالك.',
+    accountTitle: 'مرحبًا بك في فيزي',
+    accountSubtitle: 'أنشئ حسابًا للاحتفاظ بإعداداتك وسجلّك.',
+    continueApple: 'المتابعة عبر Apple',
+    continueGoogle: 'المتابعة عبر Google',
+    continueGuest: 'المتابعة كضيف',
+    signOut: 'تسجيل الخروج',
+    signedInAs: 'مسجّل الدخول باسم',
+    openCamera: 'فتح الكاميرا',
+    authError: 'فشل تسجيل الدخول. حاول مرة أخرى.',
   },
 };
 

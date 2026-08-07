@@ -1,4 +1,5 @@
 import { CameraView as ExpoCameraView } from 'expo-camera';
+import { Redirect, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
@@ -12,10 +13,26 @@ import { ChatTranscript } from '@/features/session/chat-transcript';
 import { SessionStatusBar } from '@/features/session/session-status-bar';
 import { statusAnnouncement } from '@/features/session/session-status';
 import { useVoiceAgent } from '@/features/voice/use-voice-agent';
+import { useAuthUser } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { colors, spacing, typography } from '@/theme';
 
-export default function SessionScreen() {
+// Auth gate: the camera session only starts once an account exists (Apple,
+// Google, or guest). Split from SessionScreen so hooks stay unconditional.
+export default function IndexScreen() {
+  const user = useAuthUser();
+
+  if (user === undefined) {
+    return <Screen />;
+  }
+  if (user === null) {
+    // Cast until `expo start` regenerates typed routes with the new screen.
+    return <Redirect href={'/account' as Href} />;
+  }
+  return <SessionScreen />;
+}
+
+function SessionScreen() {
   const cameraRef = useRef<ExpoCameraView | null>(null);
   const [muted, setMuted] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);

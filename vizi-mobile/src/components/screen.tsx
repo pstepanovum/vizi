@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '@/theme';
 
 type ScreenProps = {
-  children: ReactNode;
+  children?: ReactNode;
   style?: ViewStyle;
 };
 
