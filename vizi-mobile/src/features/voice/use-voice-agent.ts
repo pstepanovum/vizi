@@ -201,6 +201,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const prevUtteranceBaseRef = useRef('');
   const lastAnswerRef = useRef<string | null>(null);
   const narrationPausedRef = useRef(false);
+  const cappedAnnouncedRef = useRef(false);
   const lastDescribedFrameSizeRef = useRef<number | null>(null);
   const appActiveRef = useRef(AppState.currentState === 'active');
   const focusedRef = useRef(true);
@@ -585,10 +586,20 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       // unlimited.
       if (!ambient && !plusRef.current) {
         if (remainingFreeQuestions() <= 0) {
-          log('free daily limit reached — question blocked');
-          speakCanned('freeLimitReached');
+          // Announce the cap once; later blocked questions get only a quiet
+          // haptic so the message can't loop when the user talks over it.
+          if (!cappedAnnouncedRef.current) {
+            cappedAnnouncedRef.current = true;
+            log('free daily limit reached — question blocked');
+            speakCanned('freeLimitReached');
+          } else {
+            log('free daily limit — question silently ignored');
+            playAck();
+            startListening();
+          }
           return;
         }
+        cappedAnnouncedRef.current = false;
         recordQuestion();
       }
       const turnId = ++turnIdRef.current;
