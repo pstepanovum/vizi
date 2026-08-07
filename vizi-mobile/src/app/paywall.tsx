@@ -131,17 +131,23 @@ export default function PaywallScreen() {
             }
           }}
         />
-        <RoundedButton
-          label={t('privacyPolicy')}
-          variant="neutral"
-          onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
-        />
-        <RoundedButton
-          label={t('termsOfUse')}
-          variant="neutral"
-          onPress={() => Linking.openURL(TERMS_OF_USE_URL)}
-        />
-        <RoundedButton label={t('done')} onPress={() => router.back()} />
+        <View style={styles.legalRow}>
+          <Text
+            accessibilityRole="link"
+            style={styles.legalLink}
+            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+          >
+            {t('privacyPolicy')}
+          </Text>
+          <Text style={styles.legalDivider}>·</Text>
+          <Text
+            accessibilityRole="link"
+            style={styles.legalLink}
+            onPress={() => Linking.openURL(TERMS_OF_USE_URL)}
+          >
+            {t('termsOfUse')}
+          </Text>
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -186,5 +192,22 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
     textAlign: 'center',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  legalLink: {
+    ...typography.caption,
+    color: colors.gray500,
+    textDecorationLine: 'underline',
+  },
+  legalDivider: {
+    ...typography.caption,
+    color: colors.gray400,
   },
 });

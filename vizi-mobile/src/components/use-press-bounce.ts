@@ -5,8 +5,10 @@ import { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reani
 
 import { getSettings } from '@/lib/settings';
 
-const PRESSED_SCALE = 0.95;
-const SPRING_CONFIG = { damping: 12, stiffness: 220 };
+// Very gentle: barely-perceptible dip, critically-damped spring (no visible
+// overshoot wobble).
+const PRESSED_SCALE = 0.98;
+const SPRING_CONFIG = { damping: 20, stiffness: 260 };
 
 // Shared press feedback for buttons: a subtle bouncy scale-down on press,
 // plus a light haptic tap (respecting the user's haptics setting). Skips the
