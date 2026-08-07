@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { MASCOT_SVG, svgToDataUri } from '@/components/icons';
+import { APPLE_ICON_SVG, GOOGLE_ICON_SVG, MASCOT_SVG, svgToDataUri } from '@/components/icons';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { signInWithApple, signInWithGoogle, signOutUser, useAuthUser } from '@/lib/auth';
@@ -76,11 +76,13 @@ export default function AccountScreen() {
         {appleAvailable && (
           <RoundedButton
             label={t('continueApple')}
+            iconSvg={APPLE_ICON_SVG}
             onPress={() => !busy && run(signInWithApple)}
           />
         )}
         <RoundedButton
           label={t('continueGoogle')}
+          iconSvg={GOOGLE_ICON_SVG}
           variant="neutral"
           onPress={() => !busy && run(signInWithGoogle)}
         />
