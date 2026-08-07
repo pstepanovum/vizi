@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   section: {
     ...typography.caption,
-    color: colors.gray500,
+    color: colors.gray600,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: spacing.lg,

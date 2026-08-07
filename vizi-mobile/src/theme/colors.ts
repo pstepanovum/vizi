@@ -26,6 +26,8 @@ export const colors = {
   background: palette.cream,
   overlay: 'rgba(255, 255, 255, 0.75)',
   text: grayscale.gray900,
-  textMuted: grayscale.gray500,
+  // gray500 on cream is only 3.98:1 — below WCAG AA. gray600 reads as the
+  // same muted step visually but clears 4.5:1 on both cream and the cards.
+  textMuted: grayscale.gray600,
   textOnPrimary: grayscale.gray900,
 } as const;

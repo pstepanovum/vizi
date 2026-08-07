@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   speaker: {
     ...typography.caption,
-    color: colors.gray500,
+    color: colors.gray600,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   empty: {
     ...typography.body,
-    color: colors.gray500,
+    color: colors.gray600,
     textAlign: 'center',
     paddingVertical: spacing.md,
   },

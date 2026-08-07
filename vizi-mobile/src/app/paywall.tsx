@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     ...typography.caption,
-    color: colors.gray500,
+    color: colors.gray600,
     textDecorationLine: 'underline',
   },
   legalDivider: {
