@@ -35,13 +35,13 @@ function patternPlacement(seed: string) {
   for (let i = 0; i < seed.length; i++) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   }
+  // Gentle variation only: the pattern should feel like the same wallpaper
+  // shifted, never like a different composition per slide.
   return {
-    rotation: (hash % 4) * 90 + ((hash >> 3) % 25) - 12,
-    // Stay large enough that rotation never exposes a bare corner.
-    scale: 1.45 + (((hash >> 7) % 25) / 100),
-    // Keep the busy middle of the artwork on canvas.
-    x: 25 + ((hash >> 11) % 50),
-    y: 25 + ((hash >> 17) % 50),
+    rotation: ((hash % 13) - 6) * 1.5,
+    scale: 1.5 + (((hash >> 7) % 10) / 100),
+    x: 35 + ((hash >> 11) % 30),
+    y: 35 + ((hash >> 17) % 30),
     flip: ((hash >> 23) & 1) === 1,
   };
 }
@@ -100,8 +100,10 @@ export function SlideCanvas({
           width: layout.captionMaxWidth,
           height: layout.captionZone,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          gap: device.captionSize * 0.34,
         }}
       >
         <h1
@@ -118,6 +120,23 @@ export function SlideCanvas({
         >
           {slide.caption}
         </h1>
+        {slide.subtitle ? (
+          <p
+            style={{
+              margin: 0,
+              fontFamily: 'Poppins',
+              fontWeight: 400,
+              fontSize: device.captionSize * 0.4,
+              lineHeight: 1.35,
+              textAlign: 'center',
+              color: captionColor,
+              opacity: onCream ? 0.72 : 0.92,
+              maxWidth: layout.captionMaxWidth * 0.86,
+            }}
+          >
+            {slide.subtitle}
+          </p>
+        ) : null}
       </div>
 
       <div

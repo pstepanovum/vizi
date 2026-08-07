@@ -88,6 +88,15 @@ export function Dashboard() {
         </div>
 
         <div className="field">
+          <label htmlFor="subtitle">Subtitle</label>
+          <textarea
+            id="subtitle"
+            value={slide.subtitle}
+            onChange={(e) => patchSlide({ subtitle: e.target.value })}
+          />
+        </div>
+
+        <div className="field">
           <label htmlFor="slug">Filename slug</label>
           <input
             id="slug"

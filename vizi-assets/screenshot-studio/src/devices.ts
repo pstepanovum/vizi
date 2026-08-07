@@ -101,8 +101,9 @@ export type Layout = {
 };
 
 const CAPTION_TOP_RATIO = 0.05;
-const CAPTION_ZONE_RATIO = 0.145;
-const BOTTOM_PAD_RATIO = 0.029;
+const CAPTION_ZONE_RATIO = 0.185;
+/** The device runs off the bottom edge by this much — a deliberate crop. */
+const BOTTOM_BLEED_RATIO = 0.02;
 const SIDE_MARGIN_RATIO = 0.086;
 
 /**
@@ -116,12 +117,12 @@ export function layoutFor(device: Device): Layout {
 
   const captionTop = Math.round(canvasH * CAPTION_TOP_RATIO);
   const captionZone = Math.round(canvasH * CAPTION_ZONE_RATIO);
-  const bottomPad = Math.round(canvasH * BOTTOM_PAD_RATIO);
+  const bottomBleed = Math.round(canvasH * BOTTOM_BLEED_RATIO);
   const sideMargin = Math.round(canvasW * SIDE_MARGIN_RATIO);
 
   const deviceTop = captionTop + captionZone;
   const availableW = canvasW - sideMargin * 2 - device.bezel * 2;
-  const availableH = canvasH - deviceTop - bottomPad - device.bezel * 2;
+  const availableH = canvasH - deviceTop + bottomBleed - device.bezel * 2;
 
   const scale = Math.min(availableW / device.screenW, availableH / device.screenH);
   const screenW = device.screenW * scale;

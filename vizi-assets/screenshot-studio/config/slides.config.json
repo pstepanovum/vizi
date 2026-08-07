@@ -17,7 +17,8 @@
           "speaker": "vizi",
           "text": "Not yet — the signal is a red hand. Traffic is moving on 8th Street."
         }
-      ]
+      ],
+      "subtitle": "Vizi reads the signal and the traffic before you step."
     },
     {
       "slug": "read-out-loud",
@@ -36,7 +37,8 @@
           "speaker": "vizi",
           "text": "Avocado toast, fifteen. House blend coffee, five. Cold brew, ten."
         }
-      ]
+      ],
+      "subtitle": "Menus, labels, mail and signs — instantly."
     },
     {
       "slug": "know-the-colors",
@@ -55,7 +57,8 @@
           "speaker": "vizi",
           "text": "Deep red with a yellow blush — a Honeycrisp. The sign says two ninety-nine a pound."
         }
-      ]
+      ],
+      "subtitle": "Ask about any color, anywhere."
     },
     {
       "slug": "find-your-way",
@@ -74,7 +77,8 @@
           "speaker": "vizi",
           "text": "Miami to Fort Lauderdale, twelve o'clock, seat 4B. Platform 12 is ahead on your right."
         }
-      ]
+      ],
+      "subtitle": "Tickets, platforms and signs, read aloud."
     },
     {
       "slug": "just-ask",
@@ -84,7 +88,8 @@
       "status": "Listening…",
       "showChat": false,
       "background": "#B4D3D9",
-      "transcript": []
+      "transcript": [],
+      "subtitle": "No menus, no typing. Just conversation."
     }
   ],
   "paywall": {

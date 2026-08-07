@@ -20,6 +20,8 @@ export type Slide = {
   /** Filename slug: {index}-{slug}.png */
   slug: string;
   caption: string;
+  /** Supporting line under the caption, in Poppins. */
+  subtitle: string;
   screen: 'session' | 'paywall';
   /** File in public/scenes, or '' when the screen has no camera view. */
   scene: string;
@@ -63,6 +65,7 @@ export const DEFAULT_CONFIG: StudioConfig = {
     {
       slug: 'crossing',
       caption: 'Cross with confidence',
+      subtitle: 'Vizi reads the signal and the traffic before you step.',
       screen: 'session',
       scene: 'street.jpg',
       status: 'Speaking…',
@@ -79,6 +82,7 @@ export const DEFAULT_CONFIG: StudioConfig = {
     {
       slug: 'read-out-loud',
       caption: 'Read anything out loud',
+      subtitle: 'Menus, labels, mail and signs — instantly.',
       screen: 'session',
       scene: 'menu.jpg',
       status: 'Speaking…',
@@ -95,6 +99,7 @@ export const DEFAULT_CONFIG: StudioConfig = {
     {
       slug: 'know-the-colors',
       caption: 'Know the colors',
+      subtitle: 'Ask about any color, anywhere.',
       screen: 'session',
       scene: 'colors.jpg',
       status: 'Speaking…',
@@ -111,6 +116,7 @@ export const DEFAULT_CONFIG: StudioConfig = {
     {
       slug: 'find-your-way',
       caption: 'Find your way',
+      subtitle: 'Tickets, platforms and signs, read aloud.',
       screen: 'session',
       scene: 'train.jpg',
       status: 'Speaking…',
@@ -127,6 +133,7 @@ export const DEFAULT_CONFIG: StudioConfig = {
     {
       slug: 'just-ask',
       caption: 'Just point and ask',
+      subtitle: 'No menus, no typing. Just conversation.',
       screen: 'session',
       scene: 'kitchen.jpg',
       status: 'Listening…',
