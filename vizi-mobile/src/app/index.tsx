@@ -35,9 +35,14 @@ export default function SessionScreen() {
         <SessionStatusBar status={status} muted={muted} />
       </View>
 
-      <CameraView cameraRef={cameraRef} />
-
-      {chatVisible && <ChatTranscript entries={transcript} />}
+      <View style={styles.cameraArea}>
+        <CameraView cameraRef={cameraRef} />
+        {chatVisible && (
+          <View style={styles.chatOverlay}>
+            <ChatTranscript entries={transcript} />
+          </View>
+        )}
+      </View>
 
       <View style={styles.footer}>
         <IconButton
@@ -73,6 +78,15 @@ const styles = StyleSheet.create({
   wordmark: {
     ...typography.brand,
     color: colors.text,
+  },
+  cameraArea: {
+    flex: 1,
+  },
+  chatOverlay: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
   },
   footer: {
     paddingTop: spacing.lg,

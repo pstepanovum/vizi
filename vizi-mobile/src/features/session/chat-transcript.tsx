@@ -37,10 +37,9 @@ const styles = StyleSheet.create({
   panel: {
     maxHeight: 240,
     borderRadius: radius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.overlay,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
   },
   scrollContent: {
     gap: spacing.md,
