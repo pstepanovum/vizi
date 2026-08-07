@@ -31,7 +31,7 @@ export function SlideCanvas({
         width: layout.canvasW,
         height: layout.canvasH,
         overflow: 'hidden',
-        backgroundColor: colors.cream,
+        backgroundColor: slide.background || colors.cream,
         flexShrink: 0,
       }}
     >

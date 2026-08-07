@@ -27,6 +27,8 @@ export type Slide = {
   status: string;
   showChat: boolean;
   transcript: TranscriptEntry[];
+  /** Canvas background behind the device frame — a palette color. */
+  background: string;
 };
 
 export type PaywallContent = {
@@ -43,35 +45,34 @@ export type StudioConfig = {
 /** Keep in sync with scripts/fetch-scenes.mjs. */
 export const SCENES = [
   { file: 'street.jpg', label: 'Street crossing' },
+  { file: 'menu.jpg', label: 'Cafe menu' },
+  { file: 'colors.jpg', label: 'Produce aisle' },
+  { file: 'train.jpg', label: 'Train ticket' },
   { file: 'kitchen.jpg', label: 'Kitchen' },
-  { file: 'menu.jpg', label: 'Menu board' },
-  { file: 'clothes.jpg', label: 'Colorful clothes' },
   { file: 'clothes-rack.jpg', label: 'Clothes rack' },
 ] as const;
+
+/**
+ * Slide backgrounds cycle through the brand palette: cream, blue, lilac,
+ * cream, then back to blue.
+ */
+export const SLIDE_BACKGROUNDS = ['#F2EAE0', '#B4D3D9', '#BDA6CE', '#F2EAE0', '#B4D3D9'];
 
 export const DEFAULT_CONFIG: StudioConfig = {
   slides: [
     {
-      slug: 'conversation',
-      caption: 'See the world through conversation',
+      slug: 'crossing',
+      caption: 'Cross with confidence',
       screen: 'session',
       scene: 'street.jpg',
-      status: 'Listening…',
-      showChat: false,
-      transcript: [],
-    },
-    {
-      slug: 'point-and-ask',
-      caption: 'Just point and ask',
-      screen: 'session',
-      scene: 'kitchen.jpg',
       status: 'Speaking…',
       showChat: true,
+      background: '#F2EAE0',
       transcript: [
-        { speaker: 'user', text: "What's on the counter?" },
+        { speaker: 'user', text: 'Can I cross?' },
         {
           speaker: 'vizi',
-          text: 'Two orange pots on the stovetop, a knife block, and a small plant by the wall.',
+          text: 'Not yet — the signal is a red hand. Traffic is moving on 8th Street.',
         },
       ],
     },
@@ -82,11 +83,12 @@ export const DEFAULT_CONFIG: StudioConfig = {
       scene: 'menu.jpg',
       status: 'Speaking…',
       showChat: true,
+      background: '#B4D3D9',
       transcript: [
-        { speaker: 'user', text: 'Read me the menu.' },
+        { speaker: 'user', text: 'Read me the breakfast menu.' },
         {
           speaker: 'vizi',
-          text: 'Iced americano, five fifty. Iced mocha, five fifty. Cold brew, four twenty-five.',
+          text: 'Avocado toast, fifteen. House blend coffee, five. Cold brew, ten.',
         },
       ],
     },
@@ -94,24 +96,42 @@ export const DEFAULT_CONFIG: StudioConfig = {
       slug: 'know-the-colors',
       caption: 'Know the colors',
       screen: 'session',
-      scene: 'clothes.jpg',
+      scene: 'colors.jpg',
       status: 'Speaking…',
       showChat: true,
+      background: '#BDA6CE',
       transcript: [
-        { speaker: 'user', text: 'What colour is the top one?' },
+        { speaker: 'user', text: 'What color is this apple?' },
         {
           speaker: 'vizi',
-          text: 'Light blue, with a yellow and red pattern on it. The one behind is deep red.',
+          text: 'Deep red with a yellow blush — a Honeycrisp. The sign says two ninety-nine a pound.',
         },
       ],
     },
     {
-      slug: 'vizi-plus',
-      caption: 'Vizi Plus',
-      screen: 'paywall',
-      scene: '',
-      status: '',
+      slug: 'find-your-way',
+      caption: 'Find your way',
+      screen: 'session',
+      scene: 'train.jpg',
+      status: 'Speaking…',
+      showChat: true,
+      background: '#F2EAE0',
+      transcript: [
+        { speaker: 'user', text: 'What does my ticket say?' },
+        {
+          speaker: 'vizi',
+          text: 'Miami to Fort Lauderdale, twelve o\'clock, seat 4B. Platform 12 is ahead on your right.',
+        },
+      ],
+    },
+    {
+      slug: 'just-ask',
+      caption: 'Just point and ask',
+      screen: 'session',
+      scene: 'kitchen.jpg',
+      status: 'Listening…',
       showChat: false,
+      background: '#B4D3D9',
       transcript: [],
     },
   ],

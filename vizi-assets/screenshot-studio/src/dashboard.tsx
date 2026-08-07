@@ -97,6 +97,20 @@ export function Dashboard() {
           />
         </div>
 
+        <div className="field">
+          <label htmlFor="background">Slide background</label>
+          <select
+            id="background"
+            value={slide.background}
+            onChange={(e) => patchSlide({ background: e.target.value })}
+          >
+            <option value="#F2EAE0">Cream</option>
+            <option value="#B4D3D9">Blue</option>
+            <option value="#BDA6CE">Lilac</option>
+            <option value="#9B8EC7">Purple</option>
+          </select>
+        </div>
+
         {slide.screen === 'session' ? (
           <>
             <div className="field">
