@@ -11,6 +11,7 @@ import { SessionStatus } from '@/features/session/session-status';
 import { hasFishAudioKey, synthesizeSpeech } from '@/lib/fish-audio/client';
 import { askGemini, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
 import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
+import { languageTag, t } from '@/lib/i18n';
 
 const MAX_HISTORY_TURNS = 12;
 // Speech recognition language. Unset = the device's language, so the agent
@@ -28,6 +29,10 @@ const RECENT_SPEECH_WINDOW_MS = 4000;
 // turn never waits on the camera.
 const FRAME_SAMPLE_INTERVAL_MS = 2500;
 const FRAME_FRESHNESS_MS = 5000;
+// The iOS recognizer throws transient errors (busy restarts, brief network
+// blips to the dictation service). Only surface "error" after this many in a
+// row — isolated ones just restart quietly.
+const MAX_CONSECUTIVE_RECOGNITION_ERRORS = 3;
 
 function log(...parts: unknown[]) {
   console.log('[vizi:agent]', ...parts);
@@ -65,6 +70,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const pendingFrameRef = useRef<Promise<string | undefined> | null>(null);
   const latestFrameRef = useRef<{ base64: string; capturedAt: number } | null>(null);
   const describeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recognitionRunningRef = useRef(false);
+  const recognitionErrorsRef = useRef(0);
   const lastSpeechAtRef = useRef(0);
   const hasDescribedRef = useRef(false);
   const statusRef = useRef(status);
@@ -75,6 +83,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const startListening = useCallback(async () => {
     if (mutedRef.current) {
       log('startListening skipped — microphone muted');
+      return;
+    }
+    if (recognitionRunningRef.current) {
+      log('startListening skipped — recognizer already running');
       return;
     }
     try {
@@ -96,6 +108,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           mode: 'default',
         },
       });
+      recognitionRunningRef.current = true;
       log('listening started');
       setStatus('listening');
     } catch (error) {
@@ -105,12 +118,33 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   }, []);
 
   const stopListening = useCallback(() => {
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
     try {
       ExpoSpeechRecognitionModule.stop();
     } catch {
       // Recognizer may already be stopped — nothing to do.
     }
   }, []);
+
+  // Single funnel for restarting recognition — prevents the "end" and error
+  // handlers from double-starting the recognizer (which itself errors).
+  const scheduleRestart = useCallback(
+    (delayMs = 250) => {
+      if (restartTimerRef.current) {
+        return;
+      }
+      restartTimerRef.current = setTimeout(() => {
+        restartTimerRef.current = null;
+        if (statusRef.current === 'listening' && !mutedRef.current) {
+          startListening();
+        }
+      }, delayMs);
+    },
+    [startListening],
+  );
 
   const stopPlayback = useCallback(() => {
     Speech.stop();
@@ -150,7 +184,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const speakWithSystemVoice = useCallback(
     (text: string) => {
       log('speaking with OS voice');
-      const english = !SPEECH_LANG || SPEECH_LANG.startsWith('en');
+      const english = (SPEECH_LANG ?? languageTag).startsWith('en');
       Speech.speak(text, {
         // Pin one English voice for consistency; for other languages let iOS
         // pick the correct voice for the text.
@@ -254,7 +288,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           return;
         }
         setStatus('error');
-        await speak('Sorry, I could not process that. Please try again.');
+        await speak(t('agentError'));
       }
     },
     [appendTranscript, captureFrame, speak, startListening, stopListening],
@@ -265,6 +299,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       return;
     }
     lastSpeechAtRef.current = Date.now();
+    recognitionErrorsRef.current = 0;
     const transcript = event.results?.[0]?.transcript?.trim();
     if (event.isFinal && transcript) {
       log(`heard: "${transcript}"`);
@@ -279,22 +314,39 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     }
   });
 
+  useSpeechRecognitionEvent('start', () => {
+    recognitionRunningRef.current = true;
+  });
+
   useSpeechRecognitionEvent('end', () => {
+    recognitionRunningRef.current = false;
     // The OS recognizer times out on silence; keep the session alive.
     if (statusRef.current === 'listening') {
-      startListening();
+      scheduleRestart();
     }
   });
 
   useSpeechRecognitionEvent('error', (event) => {
-    if (event.error === 'no-speech' && statusRef.current === 'listening') {
-      startListening();
+    recognitionRunningRef.current = false;
+    if (statusRef.current !== 'listening') {
       return;
     }
-    log('speech recognition error:', event.error, event.message);
-    if (statusRef.current === 'listening') {
-      setStatus('error');
+    if (event.error === 'no-speech') {
+      scheduleRestart();
+      return;
     }
+    recognitionErrorsRef.current += 1;
+    log(
+      `speech recognition error (${recognitionErrorsRef.current}/${MAX_CONSECUTIVE_RECOGNITION_ERRORS}):`,
+      event.error,
+      event.message,
+    );
+    if (recognitionErrorsRef.current >= MAX_CONSECUTIVE_RECOGNITION_ERRORS) {
+      setStatus('error');
+      return;
+    }
+    // Transient (busy restart, brief dictation-service blip) — retry quietly.
+    scheduleRestart(500);
   });
 
   // Continuous frame sampler: while listening, keep the latest frame warm so
@@ -339,13 +391,15 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         describeTimerRef.current = setTimeout(() => {
           if (statusRef.current === 'listening' && !mutedRef.current) {
             hasDescribedRef.current = true;
-            runTurn(DESCRIBE_SCENE_PROMPT, { ambient: true });
+            runTurn(`${DESCRIBE_SCENE_PROMPT} (Device language: ${languageTag})`, {
+              ambient: true,
+            });
           }
         }, RECENT_SPEECH_WINDOW_MS);
         return;
       }
       hasDescribedRef.current = true;
-      runTurn(DESCRIBE_SCENE_PROMPT, { ambient: true });
+      runTurn(`${DESCRIBE_SCENE_PROMPT} (Device language: ${languageTag})`, { ambient: true });
     }, delay);
     return () => {
       if (describeTimerRef.current) {
@@ -379,6 +433,25 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     };
   }, [cameraPermission, startListening, stopListening, stopPlayback]);
 
+  // The error state self-recovers: after a short pause, reset and listen again.
+  useEffect(() => {
+    if (status !== 'error') {
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (statusRef.current !== 'error' || mutedRef.current) {
+        return;
+      }
+      log('auto-recovering from error state');
+      recognitionErrorsRef.current = 0;
+      setStatus('connecting');
+      startListening();
+    }, 4000);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [status, startListening]);
+
   // Mute / unmute the microphone without tearing the session down.
   useEffect(() => {
     if (muted) {
@@ -396,7 +469,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     log('repeat last answer requested');
     stopListening();
     if (!lastAnswer) {
-      speak('I have not answered anything yet. Ask me a question.');
+      speak(t('noAnswerYet'));
       return;
     }
     speak(lastAnswer);
@@ -408,7 +481,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     stopPlayback();
     if (!lastQuestion) {
       stopListening();
-      speak('You have not asked anything yet. Just speak your question.');
+      speak(t('noQuestionYet'));
       return;
     }
     runTurn(lastQuestion);

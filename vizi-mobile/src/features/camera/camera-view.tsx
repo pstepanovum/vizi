@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { CameraFrame } from '@/components/camera-frame';
 import { RoundedButton } from '@/components/rounded-button';
+import { t } from '@/lib/i18n';
 import { colors, radius, spacing, typography } from '@/theme';
 
 type CameraViewProps = {
@@ -20,10 +21,8 @@ export function CameraView({ cameraRef }: CameraViewProps) {
   if (!permission.granted) {
     return (
       <View style={styles.permissionCard}>
-        <Text style={styles.permissionText}>
-          Vizi needs the camera to see and describe the world around you.
-        </Text>
-        <RoundedButton label="Enable Camera" onPress={requestPermission} />
+        <Text style={styles.permissionText}>{t('cameraPermission')}</Text>
+        <RoundedButton label={t('enableCamera')} onPress={requestPermission} />
       </View>
     );
   }

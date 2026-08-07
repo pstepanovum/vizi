@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { TranscriptEntry } from '@/features/voice/use-voice-agent';
+import { t } from '@/lib/i18n';
 import { colors, radius, spacing, typography } from '@/theme';
 
 type ChatTranscriptProps = {
@@ -14,7 +15,7 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
   return (
     <View style={styles.panel}>
       {entries.length === 0 ? (
-        <Text style={styles.empty}>The conversation will appear here.</Text>
+        <Text style={styles.empty}>{t('chatEmpty')}</Text>
       ) : (
         <ScrollView
           ref={scrollRef}
@@ -23,7 +24,7 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
         >
           {entries.map((entry) => (
             <View key={entry.id} style={styles.entry}>
-              <Text style={styles.speaker}>{entry.speaker === 'user' ? 'You' : 'Vizi'}</Text>
+              <Text style={styles.speaker}>{entry.speaker === 'user' ? t('you') : 'Vizi'}</Text>
               <Text style={styles.text}>{entry.text}</Text>
             </View>
           ))}

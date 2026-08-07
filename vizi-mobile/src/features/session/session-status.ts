@@ -1,3 +1,5 @@
+import { t } from '@/lib/i18n';
+
 export type SessionStatus =
   | 'needs_permission'
   | 'connecting'
@@ -9,33 +11,33 @@ export type SessionStatus =
 export function statusLabel(status: SessionStatus): string {
   switch (status) {
     case 'needs_permission':
-      return 'Camera access needed';
+      return t('statusNeedsPermission');
     case 'connecting':
-      return 'Connecting…';
+      return t('statusConnecting');
     case 'listening':
-      return 'Listening…';
+      return t('statusListening');
     case 'thinking':
-      return 'Thinking…';
+      return t('statusThinking');
     case 'speaking':
-      return 'Speaking…';
+      return t('statusSpeaking');
     case 'error':
-      return 'Something went wrong';
+      return t('statusError');
   }
 }
 
 export function statusAnnouncement(status: SessionStatus): string {
   switch (status) {
     case 'listening':
-      return 'Vizi is listening. Point your camera and ask a question.';
+      return t('annListening');
     case 'connecting':
-      return 'Vizi is connecting.';
+      return t('annConnecting');
     case 'thinking':
-      return 'Vizi is thinking.';
+      return t('annThinking');
     case 'speaking':
-      return 'Vizi is speaking.';
+      return t('annSpeaking');
     case 'needs_permission':
-      return 'Vizi needs camera access to see the world around you.';
+      return t('annNeedsPermission');
     case 'error':
-      return 'Vizi hit a problem. You can try reconnecting.';
+      return t('annError');
   }
 }

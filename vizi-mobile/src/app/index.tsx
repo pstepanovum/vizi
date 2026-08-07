@@ -1,6 +1,7 @@
 import { CameraView as ExpoCameraView } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
 import { IconButton } from '@/components/icon-button';
 import { CHAT_ICON_SVG, MIC_OFF_ICON_SVG, MIC_ON_ICON_SVG } from '@/components/icons';
@@ -11,6 +12,7 @@ import { ChatTranscript } from '@/features/session/chat-transcript';
 import { SessionStatusBar } from '@/features/session/session-status-bar';
 import { statusAnnouncement } from '@/features/session/session-status';
 import { useVoiceAgent } from '@/features/voice/use-voice-agent';
+import { t } from '@/lib/i18n';
 import { colors, spacing, typography } from '@/theme';
 
 export default function SessionScreen() {
@@ -40,29 +42,33 @@ export default function SessionScreen() {
           <SessionStatusBar status={status} muted={muted} />
         </View>
         {chatVisible && (
-          <View style={styles.chatOverlay}>
+          <Animated.View
+            entering={FadeInDown.duration(220)}
+            exiting={FadeOutDown.duration(180)}
+            style={styles.chatOverlay}
+          >
             <ChatTranscript entries={transcript} />
-          </View>
+          </Animated.View>
         )}
       </View>
 
       <View style={styles.footer}>
         <IconButton
           svg={muted ? MIC_OFF_ICON_SVG : MIC_ON_ICON_SVG}
-          accessibilityLabel={muted ? 'Unmute microphone' : 'Mute microphone'}
+          accessibilityLabel={muted ? t('unmute') : t('mute')}
           active={muted}
           onPress={() => setMuted((value) => !value)}
         />
         <RoundedButton
-          label="Repeat"
+          label={t('repeat')}
           variant="neutral"
           onPress={repeatLastAnswer}
           style={styles.rowButton}
         />
-        <RoundedButton label="Ask again" onPress={askAgain} style={styles.rowButton} />
+        <RoundedButton label={t('askAgain')} onPress={askAgain} style={styles.rowButton} />
         <IconButton
           svg={CHAT_ICON_SVG}
-          accessibilityLabel={chatVisible ? 'Hide chat' : 'Show chat'}
+          accessibilityLabel={chatVisible ? t('hideChat') : t('showChat')}
           active={chatVisible}
           onPress={() => setChatVisible((value) => !value)}
         />

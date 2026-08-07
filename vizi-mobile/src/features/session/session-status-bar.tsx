@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { t } from '@/lib/i18n';
 import { colors, radius, spacing, typography } from '@/theme';
 
 import { SessionStatus, statusLabel } from './session-status';
@@ -10,7 +11,7 @@ type SessionStatusBarProps = {
 };
 
 export function SessionStatusBar({ status, muted = false }: SessionStatusBarProps) {
-  const label = muted && status === 'listening' ? 'Microphone muted' : statusLabel(status);
+  const label = muted && status === 'listening' ? t('statusMuted') : statusLabel(status);
 
   return (
     <View
