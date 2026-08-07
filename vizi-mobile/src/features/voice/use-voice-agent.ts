@@ -60,6 +60,27 @@ function playAck() {
   }
 }
 
+// Fish Audio pacing tags like (break)/(breath) are for the voice only —
+// strip them from transcript display and conversation history.
+function stripAudioTags(text: string): string {
+  return text.replace(/\((?:break|long-break|breath)\)\s?/gi, '').trim();
+}
+
+// Echo guard for barge-in: with hardware AEC the mic should not hear Vizi,
+// but if fragments leak through, ignore transcripts that are just pieces of
+// what Vizi is currently saying.
+function looksLikeEcho(transcript: string, speakingText: string | null): boolean {
+  if (!speakingText) {
+    return false;
+  }
+  const normalize = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').trim();
+  const heard = normalize(transcript);
+  if (heard.length < 4) {
+    return true;
+  }
+  return normalize(speakingText).includes(heard);
+}
+
 type VoiceAgentOptions = {
   cameraRef: RefObject<ExpoCameraView | null>;
   muted: boolean;
@@ -94,6 +115,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const describeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const eagerEndpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speakingTextRef = useRef<string | null>(null);
   const recognitionRunningRef = useRef(false);
   const recognitionErrorsRef = useRef(0);
   const lastSpeechAtRef = useRef(0);
@@ -103,13 +125,15 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   statusRef.current = status;
   mutedRef.current = muted;
 
-  const startListening = useCallback(async () => {
+  const startListening = useCallback(async ({ forBargeIn = false } = {}) => {
     if (mutedRef.current) {
       log('startListening skipped — microphone muted');
       return;
     }
     if (recognitionRunningRef.current) {
-      log('startListening skipped — recognizer already running');
+      if (!forBargeIn && statusRef.current !== 'listening') {
+        setStatus('listening');
+      }
       return;
     }
     try {
@@ -130,13 +154,20 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           categoryOptions: ['defaultToSpeaker', 'allowBluetooth'],
           mode: 'default',
         },
+        // Hardware echo cancellation: subtracts Vizi's own speaker output from
+        // the mic feed so the barge-in listener doesn't hear the agent itself.
+        iosVoiceProcessingEnabled: true,
       });
       recognitionRunningRef.current = true;
-      log('listening started');
-      setStatus('listening');
+      log(forBargeIn ? 'barge-in listener started' : 'listening started');
+      if (!forBargeIn) {
+        setStatus('listening');
+      }
     } catch (error) {
       log('failed to start listening:', error);
-      setStatus('error');
+      if (!forBargeIn) {
+        setStatus('error');
+      }
     }
   }, []);
 
@@ -169,8 +200,13 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       }
       restartTimerRef.current = setTimeout(() => {
         restartTimerRef.current = null;
-        if (statusRef.current === 'listening' && !mutedRef.current) {
+        if (mutedRef.current) {
+          return;
+        }
+        if (statusRef.current === 'listening') {
           startListening();
+        } else if (statusRef.current === 'speaking') {
+          startListening({ forBargeIn: true });
         }
       }, delayMs);
     },
@@ -179,6 +215,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   const stopPlayback = useCallback(() => {
     Speech.stop();
+    speakingTextRef.current = null;
     const player = playerRef.current;
     playerRef.current = null;
     if (player) {
@@ -239,17 +276,14 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   );
 
   // Prefer Fish Audio for natural low-latency speech; fall back to the OS voice.
+  // The recognizer keeps running during playback (with echo cancellation) so
+  // the user can interrupt — playback stays in the recognizer's
+  // playAndRecord + defaultToSpeaker session; no mode switch needed.
   const speak = useCallback(
     async (text: string) => {
       stopPlayback();
       setStatus('speaking');
-      // Session switch is pre-armed in runTurn; fire again non-blocking to
-      // cover the repeat/ask-again paths that bypass runTurn.
-      setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: false,
-        interruptionMode: 'doNotMix',
-      }).catch(() => {});
+      speakingTextRef.current = text;
       if (hasFishAudioKey()) {
         try {
           const uri = await synthesizeSpeech(text);
@@ -260,11 +294,14 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
             if (playbackStatus.didJustFinish && playerRef.current === player) {
               log('Fish Audio playback finished');
               playerRef.current = null;
+              speakingTextRef.current = null;
               player.release();
               startListening();
             }
           });
           player.play();
+          // Barge-in: listen while speaking.
+          startListening({ forBargeIn: true });
           return;
         } catch (error) {
           console.warn('[vizi:agent] Fish Audio TTS failed, falling back to OS voice:', error);
@@ -283,13 +320,6 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         // Instant "heard you" feedback while the model works.
         playAck();
       }
-      // Pre-arm the playback audio session now — it completes during the
-      // Gemini wait instead of delaying the first audio.
-      setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: false,
-        interruptionMode: 'doNotMix',
-      }).catch(() => {});
       log(`turn started (${ambient ? 'ambient description' : 'user question'}): "${question}"`);
       const turnStartedAt = Date.now();
       try {
@@ -317,9 +347,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           frameBase64,
           history: historyRef.current,
         });
+        const displayAnswer = stripAudioTags(answer);
         const newTurns: ChatTurn[] = [
           { role: 'user', text: question },
-          { role: 'model', text: answer },
+          { role: 'model', text: displayAnswer },
         ];
         historyRef.current = [...historyRef.current, ...newTurns].slice(-MAX_HISTORY_TURNS);
         setLastAnswer(answer);
@@ -327,7 +358,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           setLastQuestion(question);
           appendTranscript('user', question);
         }
-        appendTranscript('vizi', answer);
+        appendTranscript('vizi', displayAnswer);
         log(`turn answered in ${Date.now() - turnStartedAt}ms`);
         await speak(answer);
       } catch (error) {
@@ -345,7 +376,18 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   );
 
   useSpeechRecognitionEvent('result', (event) => {
-    if (statusRef.current !== 'listening') {
+    // Barge-in: the user talked over Vizi. Cut playback and treat the rest of
+    // the utterance as a normal question.
+    if (statusRef.current === 'speaking') {
+      const heard = event.results?.[0]?.transcript?.trim();
+      if (!heard || looksLikeEcho(heard, speakingTextRef.current)) {
+        return;
+      }
+      log(`barge-in: "${heard}"`);
+      stopPlayback();
+      setStatus('listening');
+      // Fall through to normal listening handling below.
+    } else if (statusRef.current !== 'listening') {
       return;
     }
     lastSpeechAtRef.current = Date.now();
@@ -388,14 +430,20 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   useSpeechRecognitionEvent('end', () => {
     recognitionRunningRef.current = false;
-    // The OS recognizer times out on silence; keep the session alive.
-    if (statusRef.current === 'listening') {
+    // The OS recognizer times out on silence; keep the session (and the
+    // barge-in listener while speaking) alive.
+    if (statusRef.current === 'listening' || statusRef.current === 'speaking') {
       scheduleRestart();
     }
   });
 
   useSpeechRecognitionEvent('error', (event) => {
     recognitionRunningRef.current = false;
+    if (statusRef.current === 'speaking') {
+      // Keep the barge-in listener alive through recognizer hiccups.
+      scheduleRestart(400);
+      return;
+    }
     if (statusRef.current !== 'listening') {
       return;
     }
