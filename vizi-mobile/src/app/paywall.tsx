@@ -21,6 +21,8 @@ import { colors, radius, spacing, typography } from '@/theme';
 
 const PRIVACY_POLICY_URL =
   'https://github.com/pstepanovum/vizi/blob/main/vizi-assets/docs/PRIVACY.md';
+const TERMS_OF_USE_URL =
+  'https://github.com/pstepanovum/vizi/blob/main/vizi-assets/docs/TERMS.md';
 
 const PACKAGE_LABELS: Record<string, () => string> = {
   MONTHLY: () => t('packageMonthly'),
@@ -133,6 +135,11 @@ export default function PaywallScreen() {
           label={t('privacyPolicy')}
           variant="neutral"
           onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+        />
+        <RoundedButton
+          label={t('termsOfUse')}
+          variant="neutral"
+          onPress={() => Linking.openURL(TERMS_OF_USE_URL)}
         />
         <RoundedButton label={t('done')} onPress={() => router.back()} />
       </ScrollView>

@@ -1,6 +1,6 @@
 // Pre-recorded phrases (Sarah voice, all app languages) — played from the
 // bundle so frequent system messages cost zero TTS API calls.
-import { languageCode } from '@/lib/i18n';
+import { resolvedLanguageCode } from '@/lib/i18n';
 
 export type CannedKey = 'freeLimitReached' | 'agentError';
 
@@ -36,5 +36,5 @@ const CANNED: Record<CannedKey, Record<string, number>> = {
 };
 
 export function cannedAudioSource(key: CannedKey): number {
-  return CANNED[key][languageCode] ?? CANNED[key].en;
+  return CANNED[key][resolvedLanguageCode()] ?? CANNED[key].en;
 }

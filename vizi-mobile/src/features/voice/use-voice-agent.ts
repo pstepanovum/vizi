@@ -20,13 +20,22 @@ import { recordQuestion, remainingFreeQuestions } from '@/lib/usage';
 import { hasFishAudioKey, synthesizeSpeech } from '@/lib/fish-audio/client';
 import { askGemini, askGeminiStream, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
 import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
-import { languageTag, t } from '@/lib/i18n';
+import { resolvedLanguageTag, t } from '@/lib/i18n';
 
 const MAX_HISTORY_TURNS = 12;
 // Speech recognition language. Unset = the device's language, so the agent
 // listens in whatever language the user's phone speaks. Override with e.g.
 // EXPO_PUBLIC_SPEECH_LANG=es-ES for a fixed language.
 const SPEECH_LANG = process.env.EXPO_PUBLIC_SPEECH_LANG;
+
+// Recognizer language: a language chosen in Settings wins (as a full BCP-47
+// tag); otherwise the env override; otherwise undefined = device default.
+function recognizerLang(): string | undefined {
+  if (getSettings().language !== 'auto') {
+    return resolvedLanguageTag();
+  }
+  return SPEECH_LANG;
+}
 // Ambient narration: describe the scene shortly after start, then again
 // whenever the session sits idle in "listening" for this long.
 const FIRST_DESCRIBE_DELAY_MS = 1500;
@@ -250,8 +259,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       // steady output level: iOS never reconfigures the session, so the volume
       // never shifts when the mic engages. (Voice processing = hardware echo
       // cancellation, so the barge-in listener never hears Vizi itself.)
+      const lang = recognizerLang();
       ExpoSpeechRecognitionModule.start({
-        ...(SPEECH_LANG ? { lang: SPEECH_LANG } : {}),
+        ...(lang ? { lang } : {}),
         interimResults: true,
         continuous: true,
         iosCategory: {
@@ -369,7 +379,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const speakWithSystemVoice = useCallback(
     (text: string) => {
       log('speaking with OS voice');
-      const english = (SPEECH_LANG ?? languageTag).startsWith('en');
+      const english = (recognizerLang() ?? resolvedLanguageTag()).startsWith('en');
       Speech.speak(text, {
         // Pin one English voice for consistency; for other languages let iOS
         // pick the correct voice for the text.
@@ -977,7 +987,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           return;
         }
         hasDescribedRef.current = true;
-        runTurn(`${DESCRIBE_SCENE_PROMPT} (Device language: ${languageTag})`, { ambient: true });
+        runTurn(`${DESCRIBE_SCENE_PROMPT} (Device language: ${resolvedLanguageTag()})`, { ambient: true });
       }, delay);
     };
 

@@ -5,7 +5,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { CameraFrame } from '@/components/camera-frame';
 import { RoundedButton } from '@/components/rounded-button';
 import { t } from '@/lib/i18n';
+import { useSettings } from '@/lib/settings';
 import { colors, radius, spacing, typography } from '@/theme';
+
+const LARGE_TEXT_SCALE = 1.35;
 
 type CameraViewProps = {
   cameraRef?: RefObject<ExpoCameraView | null>;
@@ -13,6 +16,7 @@ type CameraViewProps = {
 
 export function CameraView({ cameraRef }: CameraViewProps) {
   const [permission, requestPermission] = useCameraPermissions();
+  const { largeText } = useSettings();
 
   if (!permission) {
     return <CameraFrame />;
@@ -21,7 +25,17 @@ export function CameraView({ cameraRef }: CameraViewProps) {
   if (!permission.granted) {
     return (
       <View style={styles.permissionCard}>
-        <Text style={styles.permissionText}>{t('cameraPermission')}</Text>
+        <Text
+          style={[
+            styles.permissionText,
+            largeText && {
+              fontSize: typography.body.fontSize * LARGE_TEXT_SCALE,
+              lineHeight: typography.body.lineHeight * LARGE_TEXT_SCALE,
+            },
+          ]}
+        >
+          {t('cameraPermission')}
+        </Text>
         <RoundedButton label={t('enableCamera')} onPress={requestPermission} />
       </View>
     );

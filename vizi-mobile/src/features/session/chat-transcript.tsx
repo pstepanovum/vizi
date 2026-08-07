@@ -4,7 +4,10 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { TranscriptEntry } from '@/features/voice/use-voice-agent';
 import { t } from '@/lib/i18n';
+import { useSettings } from '@/lib/settings';
 import { colors, radius, spacing, typography } from '@/theme';
+
+const LARGE_TEXT_SCALE = 1.35;
 
 type ChatTranscriptProps = {
   entries: TranscriptEntry[];
@@ -12,11 +15,27 @@ type ChatTranscriptProps = {
 
 export function ChatTranscript({ entries }: ChatTranscriptProps) {
   const scrollRef = useRef<ScrollView>(null);
+  const { largeText, highContrast } = useSettings();
+
+  const textStyle = [
+    styles.text,
+    largeText && {
+      fontSize: typography.body.fontSize * LARGE_TEXT_SCALE,
+      lineHeight: typography.body.lineHeight * LARGE_TEXT_SCALE,
+    },
+    highContrast && styles.textHighContrast,
+  ];
 
   return (
-    <BlurView intensity={55} tint="extraLight" style={styles.panel}>
+    <BlurView
+      intensity={55}
+      tint="extraLight"
+      style={[styles.panel, highContrast && styles.panelHighContrast]}
+    >
       {entries.length === 0 ? (
-        <Text style={styles.empty}>{t('chatEmpty')}</Text>
+        <Text style={[styles.empty, highContrast && styles.textHighContrast]}>
+          {t('chatEmpty')}
+        </Text>
       ) : (
         <ScrollView
           ref={scrollRef}
@@ -25,8 +44,10 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
         >
           {entries.map((entry) => (
             <View key={entry.id} style={styles.entry}>
-              <Text style={styles.speaker}>{entry.speaker === 'user' ? t('you') : 'Vizi'}</Text>
-              <Text style={styles.text}>{entry.text}</Text>
+              <Text style={[styles.speaker, highContrast && styles.textHighContrast]}>
+                {entry.speaker === 'user' ? t('you') : 'Vizi'}
+              </Text>
+              <Text style={textStyle}>{entry.text}</Text>
             </View>
           ))}
         </ScrollView>
@@ -46,6 +67,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
   },
+  // High contrast: no translucency — solid white behind pure black text.
+  panelHighContrast: {
+    backgroundColor: '#FFFFFF',
+  },
   scrollContent: {
     gap: spacing.md,
     paddingVertical: spacing.sm,
@@ -62,6 +87,9 @@ const styles = StyleSheet.create({
   text: {
     ...typography.body,
     color: colors.gray900,
+  },
+  textHighContrast: {
+    color: '#000000',
   },
   empty: {
     ...typography.body,

@@ -5,6 +5,8 @@
 // Locale detection uses Hermes' built-in Intl (reflects the device language on
 // iOS) — no native module required.
 
+import { getSettings } from '@/lib/settings';
+
 type Strings = {
   statusNeedsPermission: string;
   statusConnecting: string;
@@ -65,6 +67,11 @@ type Strings = {
   benefitUnlimited: string;
   benefitSpeed: string;
   benefitVoice: string;
+  toggleLargeText: string;
+  toggleHighContrast: string;
+  termsOfUse: string;
+  sectionLanguage: string;
+  languageAuto: string;
 };
 
 const en: Strings = {
@@ -127,6 +134,11 @@ const en: Strings = {
   benefitUnlimited: 'Unlimited daily questions',
   benefitSpeed: 'Fastest responses',
   benefitVoice: 'Premium natural voice',
+  toggleLargeText: 'Large text',
+  toggleHighContrast: 'High contrast',
+  termsOfUse: 'Terms of Use',
+  sectionLanguage: 'Language',
+  languageAuto: 'Automatic',
 };
 
 const translations: Record<string, Strings> = {
@@ -191,6 +203,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'Preguntas diarias ilimitadas',
     benefitSpeed: 'Respuestas más rápidas',
     benefitVoice: 'Voz natural premium',
+    toggleLargeText: 'Texto grande',
+    toggleHighContrast: 'Alto contraste',
+    termsOfUse: 'Términos de uso',
+    sectionLanguage: 'Idioma',
+    languageAuto: 'Automático',
   },
   fr: {
     statusNeedsPermission: 'Accès à la caméra requis',
@@ -252,6 +269,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'Questions quotidiennes illimitées',
     benefitSpeed: 'Réponses plus rapides',
     benefitVoice: 'Voix naturelle premium',
+    toggleLargeText: 'Grand texte',
+    toggleHighContrast: 'Contraste élevé',
+    termsOfUse: 'Conditions d’utilisation',
+    sectionLanguage: 'Langue',
+    languageAuto: 'Automatique',
   },
   de: {
     statusNeedsPermission: 'Kamerazugriff erforderlich',
@@ -313,6 +335,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'Unbegrenzte tägliche Fragen',
     benefitSpeed: 'Schnellste Antworten',
     benefitVoice: 'Natürliche Premium-Stimme',
+    toggleLargeText: 'Großer Text',
+    toggleHighContrast: 'Hoher Kontrast',
+    termsOfUse: 'Nutzungsbedingungen',
+    sectionLanguage: 'Sprache',
+    languageAuto: 'Automatisch',
   },
   it: {
     statusNeedsPermission: 'Accesso alla fotocamera necessario',
@@ -374,6 +401,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'Domande giornaliere illimitate',
     benefitSpeed: 'Risposte più veloci',
     benefitVoice: 'Voce naturale premium',
+    toggleLargeText: 'Testo grande',
+    toggleHighContrast: 'Contrasto elevato',
+    termsOfUse: 'Termini di utilizzo',
+    sectionLanguage: 'Lingua',
+    languageAuto: 'Automatica',
   },
   pt: {
     statusNeedsPermission: 'Acesso à câmera necessário',
@@ -435,6 +467,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'Perguntas diárias ilimitadas',
     benefitSpeed: 'Respostas mais rápidas',
     benefitVoice: 'Voz natural premium',
+    toggleLargeText: 'Texto grande',
+    toggleHighContrast: 'Alto contraste',
+    termsOfUse: 'Termos de uso',
+    sectionLanguage: 'Idioma',
+    languageAuto: 'Automático',
   },
   ru: {
     statusNeedsPermission: 'Нужен доступ к камере',
@@ -496,6 +533,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'Неограниченные вопросы каждый день',
     benefitSpeed: 'Самые быстрые ответы',
     benefitVoice: 'Премиальный естественный голос',
+    toggleLargeText: 'Крупный текст',
+    toggleHighContrast: 'Высокая контрастность',
+    termsOfUse: 'Условия использования',
+    sectionLanguage: 'Язык',
+    languageAuto: 'Автоматически',
   },
   uk: {
     statusNeedsPermission: 'Потрібен доступ до камери',
@@ -557,6 +599,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'Необмежені запитання щодня',
     benefitSpeed: 'Найшвидші відповіді',
     benefitVoice: 'Преміальний природний голос',
+    toggleLargeText: 'Великий текст',
+    toggleHighContrast: 'Висока контрастність',
+    termsOfUse: 'Умови використання',
+    sectionLanguage: 'Мова',
+    languageAuto: 'Автоматично',
   },
   zh: {
     statusNeedsPermission: '需要相机权限',
@@ -618,6 +665,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: '每日无限提问',
     benefitSpeed: '最快的响应',
     benefitVoice: '高级自然语音',
+    toggleLargeText: '大字体',
+    toggleHighContrast: '高对比度',
+    termsOfUse: '使用条款',
+    sectionLanguage: '语言',
+    languageAuto: '自动',
   },
   ja: {
     statusNeedsPermission: 'カメラへのアクセスが必要です',
@@ -679,6 +731,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: '毎日無制限の質問',
     benefitSpeed: '最速の応答',
     benefitVoice: 'プレミアムな自然な音声',
+    toggleLargeText: '大きな文字',
+    toggleHighContrast: 'ハイコントラスト',
+    termsOfUse: '利用規約',
+    sectionLanguage: '言語',
+    languageAuto: '自動',
   },
   ko: {
     statusNeedsPermission: '카메라 접근 권한 필요',
@@ -740,6 +797,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: '매일 무제한 질문',
     benefitSpeed: '가장 빠른 응답',
     benefitVoice: '프리미엄 자연 음성',
+    toggleLargeText: '큰 텍스트',
+    toggleHighContrast: '고대비',
+    termsOfUse: '이용약관',
+    sectionLanguage: '언어',
+    languageAuto: '자동',
   },
   ar: {
     statusNeedsPermission: 'مطلوب إذن الكاميرا',
@@ -801,6 +863,11 @@ const translations: Record<string, Strings> = {
     benefitUnlimited: 'أسئلة يومية غير محدودة',
     benefitSpeed: 'استجابات أسرع',
     benefitVoice: 'صوت طبيعي مميز',
+    toggleLargeText: 'نص كبير',
+    toggleHighContrast: 'تباين عالٍ',
+    termsOfUse: 'شروط الاستخدام',
+    sectionLanguage: 'اللغة',
+    languageAuto: 'تلقائي',
   },
 };
 
@@ -812,11 +879,46 @@ function detectLanguageTag(): string {
   }
 }
 
-export const languageTag = detectLanguageTag();
-export const languageCode = languageTag.split('-')[0].toLowerCase();
+// Device language — the 'auto' base. A language override chosen in Settings
+// takes precedence; it is read live so the UI can switch at runtime.
+const deviceLanguageTag = detectLanguageTag();
+const deviceLanguageCode = deviceLanguageTag.split('-')[0].toLowerCase();
 
-const strings: Strings = translations[languageCode] ?? en;
+// Representative BCP-47 tag per supported language, used for the speech
+// recognizer and language hints when the user overrides the device language.
+const LANGUAGE_TAGS: Record<string, string> = {
+  en: 'en-US',
+  es: 'es-ES',
+  fr: 'fr-FR',
+  de: 'de-DE',
+  it: 'it-IT',
+  pt: 'pt-BR',
+  ru: 'ru-RU',
+  uk: 'uk-UA',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+  ar: 'ar-SA',
+};
+
+function languageOverride(): string | null {
+  const { language } = getSettings();
+  return language && language !== 'auto' ? language : null;
+}
+
+export function resolvedLanguageCode(): string {
+  return languageOverride() ?? deviceLanguageCode;
+}
+
+export function resolvedLanguageTag(): string {
+  const override = languageOverride();
+  if (override) {
+    return LANGUAGE_TAGS[override] ?? override;
+  }
+  return deviceLanguageTag;
+}
 
 export function t(key: keyof Strings): string {
+  const strings = translations[resolvedLanguageCode()] ?? en;
   return strings[key];
 }

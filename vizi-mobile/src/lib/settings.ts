@@ -6,11 +6,19 @@ import { useEffect, useState } from 'react';
 export type AppSettings = {
   haptics: boolean;
   ambientNarration: boolean;
+  largeText: boolean;
+  highContrast: boolean;
+  // UI language: 'auto' follows the device language, otherwise a language
+  // code like 'es'.
+  language: string;
 };
 
 const DEFAULTS: AppSettings = {
   haptics: true,
   ambientNarration: true,
+  largeText: false,
+  highContrast: false,
+  language: 'auto',
 };
 
 let current: AppSettings = { ...DEFAULTS };
