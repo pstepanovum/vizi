@@ -2,6 +2,10 @@ import { File, Paths } from 'expo-file-system';
 
 const API_KEY = process.env.EXPO_PUBLIC_FISH_AUDIO_API_KEY;
 const MODEL = process.env.EXPO_PUBLIC_FISH_AUDIO_MODEL ?? 's1';
+// Pinned voice so Vizi always sounds the same. Default: "Sarah" — calm,
+// clear English. Override with EXPO_PUBLIC_FISH_AUDIO_VOICE_ID.
+const VOICE_ID =
+  process.env.EXPO_PUBLIC_FISH_AUDIO_VOICE_ID ?? '933563129e564b19a115bedd57b7406a';
 
 export function hasFishAudioKey(): boolean {
   return Boolean(API_KEY);
@@ -26,6 +30,7 @@ export async function synthesizeSpeech(text: string): Promise<string> {
     body: JSON.stringify({
       text,
       format: 'mp3',
+      reference_id: VOICE_ID,
       // "balanced" trades a little fidelity for noticeably lower time-to-first-byte.
       latency: 'balanced',
       normalize: true,

@@ -37,6 +37,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   const historyRef = useRef<ChatTurn[]>([]);
   const playerRef = useRef<AudioPlayer | null>(null);
+  const pendingFrameRef = useRef<Promise<string | undefined> | null>(null);
   const describeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSpeechAtRef = useRef(0);
   const hasDescribedRef = useRef(false);
@@ -125,6 +126,8 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       log('speaking with OS voice');
       Speech.speak(text, {
         language: 'en-US',
+        // Pin one voice for consistency with the Fish Audio persona.
+        voice: 'com.apple.voice.compact.en-US.Samantha',
         onDone: () => {
           log('OS voice playback finished');
           startListening();
@@ -148,11 +151,16 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       setStatus('speaking');
       // Recognition has stopped by now; switch the session to pure playback so
       // iOS uses the loudspeaker at full volume.
-      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).catch(() => {});
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        interruptionMode: 'doNotMix',
+      }).catch(() => {});
       if (hasFishAudioKey()) {
         try {
           const uri = await synthesizeSpeech(text);
           const player = createAudioPlayer({ uri });
+          player.volume = 1.0;
           playerRef.current = player;
           player.addListener('playbackStatusUpdate', (playbackStatus) => {
             if (playbackStatus.didJustFinish && playerRef.current === player) {
@@ -180,7 +188,11 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       log(`turn started (${ambient ? 'ambient description' : 'user question'}): "${question}"`);
       const turnStartedAt = Date.now();
       try {
-        const frameBase64 = await captureFrame();
+        // Use the frame pre-captured while the user was still speaking, if any —
+        // shaves the capture time off the response latency.
+        const pendingFrame = pendingFrameRef.current;
+        pendingFrameRef.current = null;
+        const frameBase64 = (await pendingFrame) ?? (await captureFrame());
         const answer = await askGemini({
           question,
           frameBase64,
@@ -217,6 +229,13 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     if (event.isFinal && transcript) {
       log(`heard: "${transcript}"`);
       runTurn(transcript);
+      return;
+    }
+    // User started talking — grab a frame now so it's ready by the time
+    // they finish the question.
+    if (transcript && !pendingFrameRef.current) {
+      log('pre-capturing frame while user speaks');
+      pendingFrameRef.current = captureFrame();
     }
   });
 

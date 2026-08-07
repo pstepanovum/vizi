@@ -43,6 +43,9 @@ export async function askGemini({
     generationConfig: {
       temperature: 0.4,
       maxOutputTokens: 512,
+      // Skip the model's internal "thinking" phase — roughly halves latency
+      // for short conversational answers on 2.5 Flash.
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 
