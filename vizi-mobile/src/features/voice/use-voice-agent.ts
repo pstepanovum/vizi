@@ -12,6 +12,7 @@ import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { SessionStatus } from '@/features/session/session-status';
+import { cannedAudioSource, type CannedKey } from '@/features/voice/canned-audio';
 import { matchVoiceCommand } from '@/features/voice/voice-commands';
 import { isPlus, useCustomerInfo } from '@/lib/purchases';
 import { getSettings } from '@/lib/settings';
@@ -435,6 +436,37 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     [speakWithSystemVoice, startListening, stopPlayback],
   );
 
+  // Bundled pre-recorded phrases (localized, Sarah voice) — zero API cost for
+  // the messages that repeat the most.
+  const speakCanned = useCallback(
+    (key: CannedKey) => {
+      stopPlayback();
+      setStatus('speaking');
+      speakingTextRef.current = t(key);
+      const player = createAudioPlayer(cannedAudioSource(key));
+      player.volume = 1.0;
+      playerRef.current = player;
+      player.addListener('playbackStatusUpdate', (playbackStatus) => {
+        if (playbackStatus.didJustFinish && playerRef.current === player) {
+          playerRef.current = null;
+          if (speakingTextRef.current) {
+            lastSpokenRef.current = {
+              text: speakingTextRef.current,
+              expiresAt: Date.now() + ECHO_TAIL_MS,
+            };
+          }
+          speakingTextRef.current = null;
+          player.release();
+          startListening();
+        }
+      });
+      player.play();
+      startListening({ forBargeIn: true });
+      log(`playing canned audio: ${key}`);
+    },
+    [startListening, stopPlayback],
+  );
+
   // --- Streamed-sentence playback workers (self-referencing via refs) ---
 
   streamPlayNextRef.current = () => {
@@ -554,7 +586,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       if (!ambient && !plusRef.current) {
         if (remainingFreeQuestions() <= 0) {
           log('free daily limit reached — question blocked');
-          speak(t('freeLimitReached'));
+          speakCanned('freeLimitReached');
           return;
         }
         recordQuestion();
@@ -678,10 +710,18 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           return;
         }
         setStatus('error');
-        await speak(t('agentError'));
+        speakCanned('agentError');
       }
     },
-    [appendTranscript, captureFrame, clearEagerEndpoint, speak, startListening, stopPlayback],
+    [
+      appendTranscript,
+      captureFrame,
+      clearEagerEndpoint,
+      speak,
+      speakCanned,
+      startListening,
+      stopPlayback,
+    ],
   );
 
   // Consume the new words since the last consumed utterance and run a turn —

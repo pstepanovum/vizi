@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { APPLE_ICON_SVG, GOOGLE_ICON_SVG, MASCOT_SVG, svgToDataUri } from '@/components/icons';
+import { PAYWALL_PATTERN_SVG } from '@/components/paywall-pattern';
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { signInWithApple, signInWithGoogle, signOutUser, useAuthUser } from '@/lib/auth';
@@ -62,6 +63,13 @@ export default function AccountScreen() {
   return (
     <Screen style={styles.screen}>
       <Image
+        source={{ uri: svgToDataUri(PAYWALL_PATTERN_SVG) }}
+        style={styles.pattern}
+        contentFit="cover"
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+      />
+      <Image
         source={{ uri: svgToDataUri(MASCOT_SVG) }}
         style={styles.mascot}
         contentFit="contain"
@@ -94,6 +102,14 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   screen: {
     justifyContent: 'center',
+  },
+  pattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.4,
   },
   mascot: {
     width: 220,
