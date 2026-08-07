@@ -1,5 +1,6 @@
 import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { CameraView as ExpoCameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import {
   ExpoSpeechRecognitionModule,
@@ -11,7 +12,7 @@ import { AppState } from 'react-native';
 import { SessionStatus } from '@/features/session/session-status';
 import { matchVoiceCommand } from '@/features/voice/voice-commands';
 import { hasFishAudioKey, synthesizeSpeech } from '@/lib/fish-audio/client';
-import { askGemini, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
+import { askGemini, askGeminiStream, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
 import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
 import { languageTag, t } from '@/lib/i18n';
 
@@ -55,19 +56,11 @@ function log(...parts: unknown[]) {
   console.log('[vizi:agent]', ...parts);
 }
 
-// Preloaded "heard you" earcon — fires the instant a turn starts so the user
-// gets sub-150ms acknowledgment even while the model thinks. For blind users
-// the visual "Thinking…" pill is no feedback at all; this is the accessibility
-// pattern Siri/Alexa use.
-const ackPlayer = createAudioPlayer(require('../../../assets/sounds/ack.wav'));
-
+// Instant "heard you" acknowledgment: a light haptic tap the moment a turn
+// starts — silent (no earcon that could read as a system recording sound),
+// but still sub-150ms feedback while the model thinks.
 function playAck() {
-  try {
-    ackPlayer.seekTo(0);
-    ackPlayer.play();
-  } catch {
-    // Earcon is best-effort — never let it break a turn.
-  }
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 }
 
 // Fish Audio pacing tags like (break)/(breath) are for the voice only —
@@ -139,6 +132,19 @@ function trimEchoSuffix(text: string, spokenText: string): string {
 type VoiceAgentOptions = {
   cameraRef: RefObject<ExpoCameraView | null>;
   muted: boolean;
+};
+
+// Sentence-pipelined playback for streamed answers: sentence N plays while
+// sentence N+1 synthesizes and the model still generates N+2.
+type StreamQueue = {
+  turnId: number;
+  sentences: string[];
+  uris: (string | 'failed' | null)[];
+  nextPlay: number;
+  nextSynth: number;
+  synthBusy: boolean;
+  streamDone: boolean;
+  spoken: string;
 };
 
 export type TranscriptEntry = {
@@ -291,8 +297,13 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     [startListening],
   );
 
+  const streamQueueRef = useRef<StreamQueue | null>(null);
+  const streamPlayNextRef = useRef<() => void>(() => {});
+  const streamSynthNextRef = useRef<() => void>(() => {});
+
   const stopPlayback = useCallback(() => {
     Speech.stop();
+    streamQueueRef.current = null;
     if (speakingTextRef.current) {
       // Echo of what was already played may still arrive from the recognizer.
       lastSpokenRef.current = {
@@ -405,6 +416,114 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     [speakWithSystemVoice, startListening, stopPlayback],
   );
 
+  // --- Streamed-sentence playback workers (self-referencing via refs) ---
+
+  streamPlayNextRef.current = () => {
+    const q = streamQueueRef.current;
+    if (!q) {
+      return;
+    }
+    if (turnIdRef.current !== q.turnId) {
+      streamQueueRef.current = null;
+      return;
+    }
+    if (playerRef.current) {
+      return;
+    }
+    if (q.nextPlay >= q.sentences.length) {
+      if (q.streamDone && !q.synthBusy && q.nextSynth >= q.sentences.length) {
+        streamQueueRef.current = null;
+        if (q.spoken) {
+          lastSpokenRef.current = { text: q.spoken, expiresAt: Date.now() + ECHO_TAIL_MS };
+        }
+        speakingTextRef.current = null;
+        log('streamed playback finished');
+        startListening();
+      }
+      return;
+    }
+    const uri = q.uris[q.nextPlay];
+    if (uri === 'failed') {
+      q.nextPlay += 1;
+      streamPlayNextRef.current();
+      return;
+    }
+    if (!uri) {
+      return; // synthesis will call back when ready
+    }
+    const sentence = q.sentences[q.nextPlay];
+    q.nextPlay += 1;
+    q.spoken = `${q.spoken} ${stripAudioTags(sentence)}`.trim();
+    speakingTextRef.current = q.spoken;
+    const player = createAudioPlayer({ uri });
+    player.volume = 1.0;
+    playerRef.current = player;
+    player.addListener('playbackStatusUpdate', (playbackStatus) => {
+      if (playbackStatus.didJustFinish && playerRef.current === player) {
+        playerRef.current = null;
+        player.release();
+        streamPlayNextRef.current();
+      }
+    });
+    player.play();
+  };
+
+  streamSynthNextRef.current = async () => {
+    const q = streamQueueRef.current;
+    if (!q || q.synthBusy || turnIdRef.current !== q.turnId) {
+      return;
+    }
+    const index = q.nextSynth;
+    if (index >= q.sentences.length) {
+      streamPlayNextRef.current();
+      return;
+    }
+    q.synthBusy = true;
+    try {
+      const uri = await synthesizeSpeech(q.sentences[index]);
+      if (streamQueueRef.current === q) {
+        q.uris[index] = uri;
+      }
+    } catch (error) {
+      console.warn('[vizi:agent] sentence synthesis failed:', error);
+      if (streamQueueRef.current === q) {
+        q.uris[index] = 'failed';
+      }
+    } finally {
+      if (streamQueueRef.current === q) {
+        q.nextSynth = index + 1;
+        q.synthBusy = false;
+      }
+    }
+    streamPlayNextRef.current();
+    streamSynthNextRef.current();
+  };
+
+  const streamEnqueue = useCallback(
+    (turnId: number, sentence: string) => {
+      let q = streamQueueRef.current;
+      if (!q || q.turnId !== turnId) {
+        q = {
+          turnId,
+          sentences: [],
+          uris: [],
+          nextPlay: 0,
+          nextSynth: 0,
+          synthBusy: false,
+          streamDone: false,
+          spoken: '',
+        };
+        streamQueueRef.current = q;
+        setStatus('speaking');
+        startListening({ forBargeIn: true });
+      }
+      q.sentences.push(sentence);
+      q.uris.push(null);
+      streamSynthNextRef.current();
+    },
+    [startListening],
+  );
+
   const runTurn = useCallback(
     async (question: string, { ambient = false } = {}) => {
       // Recognition keeps running through the whole turn — no stop/start
@@ -450,11 +569,39 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         if (ambient && frameBase64) {
           lastDescribedFrameSizeRef.current = frameBase64.length;
         }
-        const answer = await askGemini({
-          question,
-          frameBase64,
-          history: historyRef.current,
-        });
+        // User questions stream: first sentence starts speaking while the
+        // rest of the answer is still generating. Ambient descriptions stay
+        // non-streaming (SAME_SCENE gate needs the full text first).
+        const streaming = !ambient && hasFishAudioKey();
+        let sentencesEmitted = 0;
+        let answer: string;
+        if (streaming) {
+          try {
+            answer = await askGeminiStream({
+              question,
+              frameBase64,
+              history: historyRef.current,
+              isCanceled: isStale,
+              onSentence: (sentence) => {
+                if (!isStale()) {
+                  sentencesEmitted += 1;
+                  streamEnqueue(turnId, sentence);
+                }
+              },
+            });
+          } catch (error) {
+            if (isStale()) {
+              return;
+            }
+            if (sentencesEmitted > 0) {
+              throw error;
+            }
+            log('streaming failed, falling back to non-streaming:', error);
+            answer = await askGemini({ question, frameBase64, history: historyRef.current });
+          }
+        } else {
+          answer = await askGemini({ question, frameBase64, history: historyRef.current });
+        }
         if (isStale()) {
           log('turn canceled — user spoke while thinking, answer discarded');
           return;
@@ -479,7 +626,17 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         }
         appendTranscript('vizi', displayAnswer);
         log(`turn answered in ${Date.now() - turnStartedAt}ms`);
-        await speak(answer);
+        if (streaming && sentencesEmitted > 0) {
+          // Playback already running via the sentence queue — just mark the
+          // stream complete so it can finish and hand back to listening.
+          const q = streamQueueRef.current;
+          if (q && q.turnId === turnId) {
+            q.streamDone = true;
+            streamPlayNextRef.current();
+          }
+        } else {
+          await speak(answer);
+        }
       } catch (error) {
         if (isStale()) {
           return;
