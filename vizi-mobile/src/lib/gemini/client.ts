@@ -68,7 +68,17 @@ export async function askGemini({
 
   const json = (await response.json()) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
+    usageMetadata?: { promptTokenCount?: number; cachedContentTokenCount?: number };
   };
+  const usage = json.usageMetadata;
+  if (usage?.promptTokenCount) {
+    // Implicit context caching kicks in automatically once the stable prefix
+    // (system prompt + early history) passes the model's minimum; cached
+    // tokens are billed at a fraction and skip re-processing.
+    console.log(
+      `[vizi:gemini] tokens: prompt=${usage.promptTokenCount} cached=${usage.cachedContentTokenCount ?? 0}`,
+    );
+  }
   const text = json.candidates?.[0]?.content?.parts
     ?.map((part) => part.text ?? '')
     .join('')

@@ -127,6 +127,14 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const narrationPausedRef = useRef(false);
   const lastDescribedFrameSizeRef = useRef<number | null>(null);
   const appActiveRef = useRef(AppState.currentState === 'active');
+  // Monotonic turn id — bumping it cancels any in-flight turn (its async
+  // stages check staleness before acting), OpenAI-response-cancel style.
+  const turnIdRef = useRef(0);
+  // The recognizer runs continuously and its transcript accumulates across a
+  // session; consumed utterances are tracked as a prefix so each turn only
+  // sees the new words.
+  const utteranceBaseRef = useRef('');
+  const latestTranscriptRef = useRef('');
   const recognitionRunningRef = useRef(false);
   const recognitionErrorsRef = useRef(0);
   const lastSpeechAtRef = useRef(0);
@@ -333,13 +341,17 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   const runTurn = useCallback(
     async (question: string, { ambient = false } = {}) => {
-      stopListening();
+      // Recognition keeps running through the whole turn — no stop/start
+      // clicks, and the user can interrupt at any stage. If they do, the turn
+      // id moves on and this turn quietly discards itself.
+      const turnId = ++turnIdRef.current;
+      const isStale = () => turnIdRef.current !== turnId;
+      clearEagerEndpoint();
+      stopPlayback();
       setStatus('thinking');
       if (!ambient) {
         // Instant "heard you" feedback while the model works.
         playAck();
-      }
-      if (!ambient) {
         // A real question re-engages the companion — resume ambient narration.
         narrationPausedRef.current = false;
       }
@@ -365,6 +377,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
             ])
           : undefined;
         const frameBase64 = racedPending ?? sampledFresh ?? (await captureFrame());
+        if (isStale()) {
+          log('turn canceled during frame stage');
+          return;
+        }
         if (ambient && frameBase64) {
           lastDescribedFrameSizeRef.current = frameBase64.length;
         }
@@ -373,6 +389,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           frameBase64,
           history: historyRef.current,
         });
+        if (isStale()) {
+          log('turn canceled — user spoke while thinking, answer discarded');
+          return;
+        }
         if (ambient && answer.trim().toUpperCase().includes('SAME_SCENE')) {
           // Model confirms nothing meaningfully changed — stay quiet.
           log('ambient: scene unchanged (model)');
@@ -395,6 +415,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         log(`turn answered in ${Date.now() - turnStartedAt}ms`);
         await speak(answer);
       } catch (error) {
+        if (isStale()) {
+          return;
+        }
         console.warn('[vizi:agent] turn failed:', error);
         if (ambient) {
           // Ambient narration failing should not interrupt the session loop.
@@ -405,68 +428,107 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         await speak(t('agentError'));
       }
     },
-    [appendTranscript, captureFrame, speak, startListening, stopListening],
+    [appendTranscript, captureFrame, clearEagerEndpoint, speak, startListening, stopPlayback],
   );
 
-  useSpeechRecognitionEvent('result', (event) => {
-    // Barge-in: the user talked over Vizi. Cut playback and treat the rest of
-    // the utterance as a normal question.
-    if (statusRef.current === 'speaking') {
-      const heard = event.results?.[0]?.transcript?.trim();
-      if (!heard || looksLikeEcho(heard, speakingTextRef.current)) {
+  // Consume the new words since the last consumed utterance and run a turn —
+  // the recognizer itself is never stopped, so there are no session
+  // start/stop sounds and no dead time between turns.
+  const consumeUtterance = useCallback(
+    (fullTranscript: string) => {
+      const base = utteranceBaseRef.current;
+      const effective =
+        base && fullTranscript.toLowerCase().startsWith(base.toLowerCase())
+          ? fullTranscript.slice(base.length).trim()
+          : fullTranscript.trim();
+      utteranceBaseRef.current = fullTranscript;
+      if (!effective) {
         return;
       }
-      log(`barge-in: "${heard}"`);
-      stopPlayback();
-      setStatus('listening');
-      // Fall through to normal listening handling below.
-    } else if (statusRef.current !== 'listening') {
-      return;
-    }
-    lastSpeechAtRef.current = Date.now();
-    recognitionErrorsRef.current = 0;
-    const transcript = event.results?.[0]?.transcript?.trim();
-    if (event.isFinal && transcript) {
-      clearEagerEndpoint();
       // Local command intents — handled instantly, nothing sent to the model.
-      const command = matchVoiceCommand(transcript);
+      const command = matchVoiceCommand(effective);
       if (command === 'stop') {
-        log(`voice command: stop ("${transcript}") — pausing ambient narration`);
+        log(`voice command: stop ("${effective}") — pausing ambient narration`);
         narrationPausedRef.current = true;
+        turnIdRef.current += 1;
         stopPlayback();
-        startListening();
+        setStatus('listening');
         return;
       }
       if (command === 'repeat') {
-        log(`voice command: repeat ("${transcript}")`);
-        stopListening();
+        log(`voice command: repeat ("${effective}")`);
         speak(lastAnswerRef.current ?? t('noAnswerYet'));
         return;
       }
-      log(`heard: "${transcript}"`);
-      runTurn(transcript);
+      log(`heard: "${effective}"`);
+      runTurn(effective);
+    },
+    [runTurn, speak, stopPlayback],
+  );
+
+  useSpeechRecognitionEvent('result', (event) => {
+    const full = event.results?.[0]?.transcript ?? '';
+    const base = utteranceBaseRef.current;
+    const effective =
+      base && full.toLowerCase().startsWith(base.toLowerCase())
+        ? full.slice(base.length).trim()
+        : full.trim();
+
+    if (statusRef.current === 'speaking') {
+      // Barge-in: the user talked over Vizi. Cut playback, note the
+      // interruption in history so the model knows its answer was cut short.
+      if (!effective || looksLikeEcho(effective, speakingTextRef.current)) {
+        return;
+      }
+      log(`barge-in: "${effective}"`);
+      turnIdRef.current += 1;
+      stopPlayback();
+      const lastEntry = historyRef.current[historyRef.current.length - 1];
+      if (lastEntry?.role === 'model' && !lastEntry.text.endsWith('[user interrupted]')) {
+        historyRef.current = [
+          ...historyRef.current.slice(0, -1),
+          { role: 'model', text: `${lastEntry.text} [user interrupted]` },
+        ];
+      }
+      setStatus('listening');
+    } else if (statusRef.current === 'thinking') {
+      // The user spoke again before the answer arrived — cancel the in-flight
+      // turn and treat this as the start of a new utterance.
+      if (!effective) {
+        return;
+      }
+      log('user spoke while thinking — canceling in-flight turn');
+      turnIdRef.current += 1;
+      setStatus('listening');
+    } else if (statusRef.current !== 'listening') {
       return;
     }
-    if (transcript) {
+
+    lastSpeechAtRef.current = Date.now();
+    recognitionErrorsRef.current = 0;
+    latestTranscriptRef.current = full;
+
+    if (event.isFinal) {
+      clearEagerEndpoint();
+      consumeUtterance(full);
+      return;
+    }
+    if (effective) {
       // User is talking — grab a frame now so it's ready by the time they
       // finish the question.
       if (!pendingFrameRef.current) {
         log('pre-capturing frame while user speaks');
         pendingFrameRef.current = captureFrame();
       }
-      // Eager endpointing: if the interim transcript stops changing for
-      // EAGER_ENDPOINT_MS, force finalization instead of waiting out Apple's
-      // longer built-in silence window. stop() makes isFinal fire promptly.
+      // Eager endpointing: when the interim transcript stops changing for
+      // EAGER_ENDPOINT_MS, consume it directly — no recognizer stop, so no
+      // stop sound and recognition simply continues for the next utterance.
       clearEagerEndpoint();
       eagerEndpointTimerRef.current = setTimeout(() => {
         eagerEndpointTimerRef.current = null;
         if (statusRef.current === 'listening') {
-          log('eager endpoint — forcing finalization');
-          try {
-            ExpoSpeechRecognitionModule.stop();
-          } catch {
-            // Recognizer already stopping.
-          }
+          log('eager endpoint — consuming utterance');
+          consumeUtterance(latestTranscriptRef.current);
         }
       }, EAGER_ENDPOINT_MS);
     }
@@ -474,6 +536,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   useSpeechRecognitionEvent('start', () => {
     recognitionRunningRef.current = true;
+    // Fresh session — its transcript starts from scratch.
+    utteranceBaseRef.current = '';
+    latestTranscriptRef.current = '';
   });
 
   useSpeechRecognitionEvent('end', () => {
@@ -682,25 +747,19 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   const repeatLastAnswer = useCallback(() => {
     log('repeat last answer requested');
-    stopListening();
-    if (!lastAnswer) {
-      speak(t('noAnswerYet'));
-      return;
-    }
-    speak(lastAnswer);
-  }, [lastAnswer, speak, stopListening]);
+    speak(lastAnswer ?? t('noAnswerYet'));
+  }, [lastAnswer, speak]);
 
   // Re-run the last question against whatever the camera sees right now.
   const askAgain = useCallback(() => {
     log('ask-again requested');
     stopPlayback();
     if (!lastQuestion) {
-      stopListening();
       speak(t('noQuestionYet'));
       return;
     }
     runTurn(lastQuestion);
-  }, [lastQuestion, runTurn, speak, stopListening, stopPlayback]);
+  }, [lastQuestion, runTurn, speak, stopPlayback]);
 
   return { status, lastAnswer, repeatLastAnswer, askAgain, transcript };
 }
