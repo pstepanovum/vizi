@@ -24,7 +24,7 @@ export const colors = {
   ...palette,
   ...grayscale,
   background: palette.cream,
-  overlay: 'rgba(255, 255, 255, 0.92)',
+  overlay: 'rgba(255, 255, 255, 0.55)',
   text: grayscale.gray900,
   textMuted: grayscale.gray500,
   textOnPrimary: grayscale.gray900,
