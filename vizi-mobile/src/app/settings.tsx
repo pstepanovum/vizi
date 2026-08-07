@@ -1,20 +1,12 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { type PurchasesPackage } from 'react-native-purchases';
 
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
 import { signOutUser, useAuthUser } from '@/lib/auth';
 import { t } from '@/lib/i18n';
-import {
-  getCurrentOffering,
-  hasRevenueCatKey,
-  isPlus,
-  purchase,
-  restorePurchases,
-  useCustomerInfo,
-} from '@/lib/purchases';
+import { isPlus, restorePurchases, useCustomerInfo } from '@/lib/purchases';
 import { setSetting, useSettings } from '@/lib/settings';
 import { remainingFreeQuestions } from '@/lib/usage';
 import { colors, radius, spacing, typography } from '@/theme';
@@ -23,44 +15,15 @@ const PRIVACY_POLICY_URL =
   'https://github.com/pstepanovum/vizi/blob/main/vizi-assets/docs/PRIVACY.md';
 const MANAGE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
 
-const PACKAGE_LABELS: Record<string, () => string> = {
-  MONTHLY: () => t('packageMonthly'),
-  ANNUAL: () => t('packageYearly'),
-  LIFETIME: () => t('packageLifetime'),
-};
-
 export default function SettingsScreen() {
   const router = useRouter();
   const user = useAuthUser();
   const customerInfo = useCustomerInfo();
   const settings = useSettings();
-  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const plus = isPlus(customerInfo);
-
-  useEffect(() => {
-    if (!hasRevenueCatKey() || plus) {
-      return;
-    }
-    getCurrentOffering()
-      .then((offering) => setPackages(offering?.availablePackages ?? []))
-      .catch(() => setPackages([]));
-  }, [plus]);
-
-  const buy = async (pkg: PurchasesPackage) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await purchase(pkg);
-    } catch (err) {
-      console.warn('[vizi:purchases] purchase failed:', err);
-      setError(t('purchaseFailed'));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const restore = async () => {
     setBusy(true);
@@ -102,18 +65,12 @@ export default function SettingsScreen() {
             </Text>
           )}
         </View>
-        {!plus &&
-          (packages.length > 0 ? (
-            packages.map((pkg) => (
-              <RoundedButton
-                key={pkg.identifier}
-                label={`${PACKAGE_LABELS[pkg.packageType]?.() ?? pkg.packageType} — ${pkg.product.priceString}`}
-                onPress={() => !busy && buy(pkg)}
-              />
-            ))
-          ) : (
-            <Text style={styles.caption}>{t('offeringsUnavailable')}</Text>
-          ))}
+        {!plus && (
+          <RoundedButton
+            label={t('paywallTitle')}
+            onPress={() => router.push('/paywall' as Href)}
+          />
+        )}
         {error && (
           <Text style={styles.caption} accessibilityLiveRegion="assertive">
             {error}

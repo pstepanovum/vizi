@@ -45,7 +45,7 @@ function SessionScreen() {
   const cameraRef = useRef<ExpoCameraView | null>(null);
   const [muted, setMuted] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
-  const { status, repeatLastAnswer, askAgain, transcript } = useVoiceAgent({ cameraRef, muted });
+  const { status, transcript } = useVoiceAgent({ cameraRef, muted });
 
   useEffect(() => {
     if (status === 'connecting') {
@@ -91,19 +91,14 @@ function SessionScreen() {
           svg={muted ? MIC_OFF_ICON_SVG : MIC_ON_ICON_SVG}
           accessibilityLabel={muted ? t('unmute') : t('mute')}
           active={muted}
+          size={72}
           onPress={() => setMuted((value) => !value)}
         />
-        <RoundedButton
-          label={t('repeat')}
-          variant="neutral"
-          onPress={repeatLastAnswer}
-          style={styles.rowButton}
-        />
-        <RoundedButton label={t('askAgain')} onPress={askAgain} style={styles.rowButton} />
         <IconButton
           svg={CHAT_ICON_SVG}
           accessibilityLabel={chatVisible ? t('hideChat') : t('showChat')}
           active={chatVisible}
+          size={72}
           onPress={() => setChatVisible((value) => !value)}
         />
       </View>
@@ -152,9 +147,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-  },
-  rowButton: {
-    flex: 1,
+    justifyContent: 'center',
+    gap: spacing.xxl,
   },
 });

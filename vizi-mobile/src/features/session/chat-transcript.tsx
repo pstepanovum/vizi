@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur';
 import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -13,7 +14,7 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
   const scrollRef = useRef<ScrollView>(null);
 
   return (
-    <View style={styles.panel}>
+    <BlurView intensity={55} tint="extraLight" style={styles.panel}>
       {entries.length === 0 ? (
         <Text style={styles.empty}>{t('chatEmpty')}</Text>
       ) : (
@@ -30,7 +31,7 @@ export function ChatTranscript({ entries }: ChatTranscriptProps) {
           ))}
         </ScrollView>
       )}
-    </View>
+    </BlurView>
   );
 }
 
@@ -39,7 +40,9 @@ const styles = StyleSheet.create({
     maxHeight: 240,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: colors.overlay,
+    // Liquid-glass: real blur behind a thin white wash keeps text readable
+    // while the camera stays visible through the panel.
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
   },
