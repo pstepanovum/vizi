@@ -9,7 +9,7 @@ import {
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { useIsFocused } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 
 import { SessionStatus } from '@/features/session/session-status';
 import { matchVoiceCommand } from '@/features/voice/voice-commands';
@@ -163,7 +163,13 @@ export type TranscriptEntry = {
 
 export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const [cameraPermission] = useCameraPermissions();
-  const focused = useIsFocused();
+  const [focused, setFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true);
+      return () => setFocused(false);
+    }, []),
+  );
   const customerInfo = useCustomerInfo();
   const plusRef = useRef(false);
   plusRef.current = isPlus(customerInfo);

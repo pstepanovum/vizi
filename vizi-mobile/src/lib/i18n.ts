@@ -61,6 +61,10 @@ type Strings = {
   offeringsUnavailable: string;
   freeLimitReached: string;
   questionsLeftLabel: string;
+  paywallTitle: string;
+  benefitUnlimited: string;
+  benefitSpeed: string;
+  benefitVoice: string;
 };
 
 const en: Strings = {
@@ -119,6 +123,10 @@ const en: Strings = {
   offeringsUnavailable: 'Subscriptions are not available right now.',
   freeLimitReached: 'You have used all your free questions for today. Upgrade to Vizi Plus for unlimited conversations.',
   questionsLeftLabel: 'Free questions left today',
+  paywallTitle: 'Unlock Vizi Plus',
+  benefitUnlimited: 'Unlimited daily questions',
+  benefitSpeed: 'Fastest responses',
+  benefitVoice: 'Premium natural voice',
 };
 
 const translations: Record<string, Strings> = {
@@ -179,6 +187,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'Las suscripciones no están disponibles ahora mismo.',
     freeLimitReached: 'Has usado todas tus preguntas gratis de hoy. Mejora a Vizi Plus para conversaciones ilimitadas.',
     questionsLeftLabel: 'Preguntas gratis restantes hoy',
+    paywallTitle: 'Desbloquea Vizi Plus',
+    benefitUnlimited: 'Preguntas diarias ilimitadas',
+    benefitSpeed: 'Respuestas más rápidas',
+    benefitVoice: 'Voz natural premium',
   },
   fr: {
     statusNeedsPermission: 'Accès à la caméra requis',
@@ -236,6 +248,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'Les abonnements ne sont pas disponibles pour le moment.',
     freeLimitReached: 'Vous avez utilisé toutes vos questions gratuites pour aujourd’hui. Passez à Vizi Plus pour des conversations illimitées.',
     questionsLeftLabel: 'Questions gratuites restantes aujourd’hui',
+    paywallTitle: 'Débloquez Vizi Plus',
+    benefitUnlimited: 'Questions quotidiennes illimitées',
+    benefitSpeed: 'Réponses plus rapides',
+    benefitVoice: 'Voix naturelle premium',
   },
   de: {
     statusNeedsPermission: 'Kamerazugriff erforderlich',
@@ -293,6 +309,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'Abos sind derzeit nicht verfügbar.',
     freeLimitReached: 'Du hast deine kostenlosen Fragen für heute aufgebraucht. Hole dir Vizi Plus für unbegrenzte Gespräche.',
     questionsLeftLabel: 'Verbleibende kostenlose Fragen heute',
+    paywallTitle: 'Vizi Plus freischalten',
+    benefitUnlimited: 'Unbegrenzte tägliche Fragen',
+    benefitSpeed: 'Schnellste Antworten',
+    benefitVoice: 'Natürliche Premium-Stimme',
   },
   it: {
     statusNeedsPermission: 'Accesso alla fotocamera necessario',
@@ -350,6 +370,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'Gli abbonamenti non sono disponibili al momento.',
     freeLimitReached: 'Hai esaurito le domande gratuite di oggi. Passa a Vizi Plus per conversazioni illimitate.',
     questionsLeftLabel: 'Domande gratuite rimaste oggi',
+    paywallTitle: 'Sblocca Vizi Plus',
+    benefitUnlimited: 'Domande giornaliere illimitate',
+    benefitSpeed: 'Risposte più veloci',
+    benefitVoice: 'Voce naturale premium',
   },
   pt: {
     statusNeedsPermission: 'Acesso à câmera necessário',
@@ -407,6 +431,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'As assinaturas não estão disponíveis no momento.',
     freeLimitReached: 'Você usou todas as suas perguntas gratuitas de hoje. Assine o Vizi Plus para conversas ilimitadas.',
     questionsLeftLabel: 'Perguntas gratuitas restantes hoje',
+    paywallTitle: 'Desbloqueie o Vizi Plus',
+    benefitUnlimited: 'Perguntas diárias ilimitadas',
+    benefitSpeed: 'Respostas mais rápidas',
+    benefitVoice: 'Voz natural premium',
   },
   ru: {
     statusNeedsPermission: 'Нужен доступ к камере',
@@ -464,6 +492,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'Подписки сейчас недоступны.',
     freeLimitReached: 'Вы использовали все бесплатные вопросы на сегодня. Перейдите на Vizi Plus для неограниченных разговоров.',
     questionsLeftLabel: 'Осталось бесплатных вопросов сегодня',
+    paywallTitle: 'Откройте Vizi Plus',
+    benefitUnlimited: 'Неограниченные вопросы каждый день',
+    benefitSpeed: 'Самые быстрые ответы',
+    benefitVoice: 'Премиальный естественный голос',
   },
   uk: {
     statusNeedsPermission: 'Потрібен доступ до камери',
@@ -521,6 +553,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'Підписки зараз недоступні.',
     freeLimitReached: 'Ви використали всі безкоштовні запитання на сьогодні. Перейдіть на Vizi Plus для необмежених розмов.',
     questionsLeftLabel: 'Залишилось безкоштовних запитань сьогодні',
+    paywallTitle: 'Відкрийте Vizi Plus',
+    benefitUnlimited: 'Необмежені запитання щодня',
+    benefitSpeed: 'Найшвидші відповіді',
+    benefitVoice: 'Преміальний природний голос',
   },
   zh: {
     statusNeedsPermission: '需要相机权限',
@@ -578,6 +614,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: '订阅目前不可用。',
     freeLimitReached: '你今天的免费提问次数已用完。升级到 Vizi Plus 享受无限对话。',
     questionsLeftLabel: '今日剩余免费提问',
+    paywallTitle: '解锁 Vizi Plus',
+    benefitUnlimited: '每日无限提问',
+    benefitSpeed: '最快的响应',
+    benefitVoice: '高级自然语音',
   },
   ja: {
     statusNeedsPermission: 'カメラへのアクセスが必要です',
@@ -635,6 +675,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: '現在サブスクリプションは利用できません。',
     freeLimitReached: '本日の無料質問をすべて使い切りました。Vizi Plusで無制限の会話をお楽しみください。',
     questionsLeftLabel: '本日の残り無料質問数',
+    paywallTitle: 'Vizi Plusを解除',
+    benefitUnlimited: '毎日無制限の質問',
+    benefitSpeed: '最速の応答',
+    benefitVoice: 'プレミアムな自然な音声',
   },
   ko: {
     statusNeedsPermission: '카메라 접근 권한 필요',
@@ -692,6 +736,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: '현재 구독을 이용할 수 없어요.',
     freeLimitReached: '오늘의 무료 질문을 모두 사용했어요. Vizi Plus로 업그레이드하면 무제한 대화가 가능해요.',
     questionsLeftLabel: '오늘 남은 무료 질문',
+    paywallTitle: 'Vizi Plus 잠금 해제',
+    benefitUnlimited: '매일 무제한 질문',
+    benefitSpeed: '가장 빠른 응답',
+    benefitVoice: '프리미엄 자연 음성',
   },
   ar: {
     statusNeedsPermission: 'مطلوب إذن الكاميرا',
@@ -749,6 +797,10 @@ const translations: Record<string, Strings> = {
     offeringsUnavailable: 'الاشتراكات غير متاحة حاليًا.',
     freeLimitReached: 'لقد استخدمت كل أسئلتك المجانية لليوم. قم بالترقية إلى Vizi Plus لمحادثات غير محدودة.',
     questionsLeftLabel: 'الأسئلة المجانية المتبقية اليوم',
+    paywallTitle: 'افتح Vizi Plus',
+    benefitUnlimited: 'أسئلة يومية غير محدودة',
+    benefitSpeed: 'استجابات أسرع',
+    benefitVoice: 'صوت طبيعي مميز',
   },
 };
 
