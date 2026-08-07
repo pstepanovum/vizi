@@ -13,6 +13,10 @@ import { askGemini, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
 import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
 
 const MAX_HISTORY_TURNS = 12;
+// Speech recognition language. Unset = the device's language, so the agent
+// listens in whatever language the user's phone speaks. Override with e.g.
+// EXPO_PUBLIC_SPEECH_LANG=es-ES for a fixed language.
+const SPEECH_LANG = process.env.EXPO_PUBLIC_SPEECH_LANG;
 // Ambient narration: describe the scene shortly after start, then again
 // whenever the session sits idle in "listening" for this long.
 const FIRST_DESCRIBE_DELAY_MS = 1500;
@@ -79,7 +83,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         return;
       }
       ExpoSpeechRecognitionModule.start({
-        lang: 'en-US',
+        ...(SPEECH_LANG ? { lang: SPEECH_LANG } : {}),
         interimResults: true,
         continuous: false,
         // Keep output on the loudspeaker while the mic session is active —
@@ -144,10 +148,13 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const speakWithSystemVoice = useCallback(
     (text: string) => {
       log('speaking with OS voice');
+      const english = !SPEECH_LANG || SPEECH_LANG.startsWith('en');
       Speech.speak(text, {
-        language: 'en-US',
-        // Pin one voice for consistency with the Fish Audio persona.
-        voice: 'com.apple.voice.compact.en-US.Samantha',
+        // Pin one English voice for consistency; for other languages let iOS
+        // pick the correct voice for the text.
+        ...(english
+          ? { language: 'en-US', voice: 'com.apple.voice.compact.en-US.Samantha' }
+          : {}),
         onDone: () => {
           log('OS voice playback finished');
           startListening();

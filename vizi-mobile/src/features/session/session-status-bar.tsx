@@ -19,7 +19,9 @@ export function SessionStatusBar({ status, muted = false }: SessionStatusBarProp
       style={styles.bar}
     >
       <View style={[styles.dot, muted ? styles.dotMuted : styles.dotActive]} />
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -47,7 +49,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray400,
   },
   label: {
-    ...typography.body,
+    ...typography.caption,
     color: colors.text,
+    flexShrink: 1,
   },
 });

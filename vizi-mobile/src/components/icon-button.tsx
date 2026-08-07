@@ -9,25 +9,40 @@ type IconButtonProps = {
   accessibilityLabel: string;
   onPress: () => void;
   active?: boolean;
+  size?: number;
 };
 
-export function IconButton({ svg, accessibilityLabel, onPress, active = false }: IconButtonProps) {
+export function IconButton({
+  svg,
+  accessibilityLabel,
+  onPress,
+  active = false,
+  size = 64,
+}: IconButtonProps) {
+  const iconSize = Math.round(size * 0.44);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, active && styles.active, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.button,
+        { width: size, height: size },
+        active && styles.active,
+        pressed && styles.pressed,
+      ]}
     >
-      <Image source={{ uri: svgToDataUri(svg) }} style={styles.icon} contentFit="contain" />
+      <Image
+        source={{ uri: svgToDataUri(svg) }}
+        style={{ width: iconSize, height: iconSize }}
+        contentFit="contain"
+      />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    width: 64,
-    height: 64,
     borderRadius: radius.full,
     backgroundColor: colors.gray200,
     alignItems: 'center',
@@ -38,9 +53,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
-  },
-  icon: {
-    width: 28,
-    height: 28,
   },
 });
