@@ -129,6 +129,41 @@ function transcriptDelta(base: string, full: string): string {
   return full.trim();
 }
 
+// Short confirmations that must never be dropped as filler — they can be a
+// real answer to something Vizi asked.
+const SHORT_REPLIES = new Set([
+  'yes', 'no', 'ok', 'да', 'нет', 'sí', 'si', 'oui', 'non', 'ja', 'nein',
+  'sim', 'não', 'так', 'ні',
+]);
+
+// Hesitation noises ("а у а ха", "uh um") get transcribed and would otherwise
+// become questions, cancel turns, and burn the free-plan quota. For
+// space-delimited scripts: an utterance where every word is ≤2 characters is
+// filler unless it's a known short reply. CJK text (no reliable word lengths)
+// always counts as meaningful.
+function isMeaningfulSpeech(text: string): boolean {
+  const normalized = normalizeSpeech(text);
+  if (!normalized) {
+    return false;
+  }
+  if (SHORT_REPLIES.has(normalized)) {
+    return true;
+  }
+  if (!/[a-zа-яёіїєґ]/i.test(normalized)) {
+    return true;
+  }
+  const words = normalized.split(' ').filter(Boolean);
+  return words.some((word) => word.length >= 3);
+}
+
+// True when the recognizer revised its transcript to fewer words than we
+// already consumed — nothing new was said; the base must resync.
+function transcriptShrank(base: string, full: string): boolean {
+  const baseCount = normalizeSpeech(base).split(' ').filter(Boolean).length;
+  const fullCount = normalizeSpeech(full).split(' ').filter(Boolean).length;
+  return fullCount < baseCount;
+}
+
 // Echo often rides on the END of a real utterance (the recognizer appends
 // Vizi's first words to the user's sentence). Trim any suffix of `text` that
 // matches a leading chunk of what Vizi said.
@@ -610,7 +645,8 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           return;
         }
         cappedAnnouncedRef.current = false;
-        recordQuestion();
+        // Quota is recorded only when a turn actually completes — canceled
+        // turns (user kept talking) must not burn free questions.
       }
       const turnId = ++turnIdRef.current;
       const isStale = () => turnIdRef.current !== turnId;
@@ -695,6 +731,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           startListening();
           return;
         }
+        if (!ambient && !plusRef.current) {
+          recordQuestion();
+        }
         const displayAnswer = stripAudioTags(answer);
         const newTurns: ChatTurn[] = [
           { role: 'user', text: question },
@@ -750,6 +789,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   // start/stop sounds and no dead time between turns.
   const consumeUtterance = useCallback(
     (fullTranscript: string) => {
+      if (transcriptShrank(utteranceBaseRef.current, fullTranscript)) {
+        utteranceBaseRef.current = fullTranscript;
+        return;
+      }
       let effective = transcriptDelta(utteranceBaseRef.current, fullTranscript);
       // Same echo defenses as the interim path — the consumed utterance must
       // never contain Vizi's own words.
@@ -770,6 +813,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       prevUtteranceBaseRef.current = utteranceBaseRef.current;
       utteranceBaseRef.current = fullTranscript;
       if (!effective) {
+        return;
+      }
+      if (!isMeaningfulSpeech(effective)) {
+        log(`ignored filler utterance: "${effective}"`);
         return;
       }
       // Local command intents — handled instantly, nothing sent to the model.
@@ -795,6 +842,12 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   useSpeechRecognitionEvent('result', (event) => {
     const full = event.results?.[0]?.transcript ?? '';
+    if (transcriptShrank(utteranceBaseRef.current, full)) {
+      // Recognizer revised the transcript to fewer words than already
+      // consumed — resync silently; replaying old words caused loops.
+      utteranceBaseRef.current = full;
+      return;
+    }
     let effective = transcriptDelta(utteranceBaseRef.current, full);
     if (!effective) {
       return;
@@ -826,8 +879,11 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     }
 
     if (statusRef.current === 'speaking') {
-      // Barge-in: the user talked over Vizi. Cut playback, note the
-      // interruption in history so the model knows its answer was cut short.
+      // Barge-in: the user talked over Vizi. Only meaningful speech cuts
+      // playback — hesitation noises must not interrupt the answer.
+      if (!isMeaningfulSpeech(effective)) {
+        return;
+      }
       log(`barge-in: "${effective}"`);
       turnIdRef.current += 1;
       stopPlayback();
@@ -842,6 +898,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     } else if (statusRef.current === 'thinking') {
       // The user spoke again before the answer arrived — cancel the in-flight
       // turn, roll the consume back, and let the utterance rebuild whole.
+      // Hesitation noises don't count; they were canceling real turns.
+      if (!isMeaningfulSpeech(effective)) {
+        return;
+      }
       log('user spoke while thinking — canceling in-flight turn');
       turnIdRef.current += 1;
       utteranceBaseRef.current = prevUtteranceBaseRef.current;
