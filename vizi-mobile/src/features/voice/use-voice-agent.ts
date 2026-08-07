@@ -11,6 +11,7 @@ import { AppState } from 'react-native';
 
 import { SessionStatus } from '@/features/session/session-status';
 import { matchVoiceCommand } from '@/features/voice/voice-commands';
+import { getSettings } from '@/lib/settings';
 import { hasFishAudioKey, synthesizeSpeech } from '@/lib/fish-audio/client';
 import { askGemini, askGeminiStream, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
 import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
@@ -60,6 +61,9 @@ function log(...parts: unknown[]) {
 // starts — silent (no earcon that could read as a system recording sound),
 // but still sub-150ms feedback while the model thinks.
 function playAck() {
+  if (!getSettings().haptics) {
+    return;
+  }
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 }
 
@@ -873,7 +877,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         if (statusRef.current !== 'listening' || mutedRef.current) {
           return;
         }
-        if (narrationPausedRef.current) {
+        if (narrationPausedRef.current || !getSettings().ambientNarration) {
           armAmbient(AUTO_DESCRIBE_INTERVAL_MS);
           return;
         }

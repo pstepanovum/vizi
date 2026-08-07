@@ -5,13 +5,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { RoundedButton } from '@/components/rounded-button';
 import { Screen } from '@/components/screen';
-import {
-  signInAsGuest,
-  signInWithApple,
-  signInWithGoogle,
-  signOutUser,
-  useAuthUser,
-} from '@/lib/auth';
+import { signInWithApple, signInWithGoogle, signOutUser, useAuthUser } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { colors, spacing, typography } from '@/theme';
 
@@ -78,12 +72,8 @@ export default function AccountScreen() {
         )}
         <RoundedButton
           label={t('continueGoogle')}
-          onPress={() => !busy && run(signInWithGoogle)}
-        />
-        <RoundedButton
-          label={t('continueGuest')}
           variant="neutral"
-          onPress={() => !busy && run(signInAsGuest)}
+          onPress={() => !busy && run(signInWithGoogle)}
         />
       </View>
     </Screen>

@@ -44,7 +44,9 @@ export default function RootLayout() {
           headerShown: false,
           contentStyle: { backgroundColor: colors.background },
         }}
-      />
+      >
+        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+      </Stack>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { CameraView as ExpoCameraView } from 'expo-camera';
-import { Redirect, type Href } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
@@ -41,6 +41,7 @@ export default function IndexScreen() {
 }
 
 function SessionScreen() {
+  const router = useRouter();
   const cameraRef = useRef<ExpoCameraView | null>(null);
   const [muted, setMuted] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
@@ -56,9 +57,17 @@ function SessionScreen() {
   return (
     <Screen>
       <View style={styles.header}>
+        <View style={styles.headerSide} />
         <Text accessibilityRole="header" style={styles.wordmark}>
           Vizi
         </Text>
+        <View style={[styles.headerSide, styles.headerRight]}>
+          <RoundedButton
+            label="Vizi+"
+            onPress={() => router.push('/settings' as Href)}
+            style={styles.plusButton}
+          />
+        </View>
       </View>
 
       <View style={styles.cameraArea}>
@@ -104,8 +113,20 @@ function SessionScreen() {
 
 const styles = StyleSheet.create({
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.md,
+  },
+  headerSide: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  plusButton: {
+    minHeight: 44,
+    paddingVertical: spacing.sm,
   },
   wordmark: {
     ...typography.brand,
