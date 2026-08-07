@@ -2,6 +2,7 @@
 .DS_Store
 
 # Secrets — never commit credentials
+vizi-mobile/scripts/.env.release
 vizi-assets/apple/*.p8
 vizi-assets/firebase/*adminsdk*.json
 vizi-assets/firebase/*.zip

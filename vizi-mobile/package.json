@@ -58,7 +58,13 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "release": "bash scripts/release-ios.sh build",
+    "release:patch": "bash scripts/release-ios.sh patch",
+    "release:minor": "bash scripts/release-ios.sh minor",
+    "release:major": "bash scripts/release-ios.sh major",
+    "bump": "node scripts/bump-version.js",
+    "typecheck": "tsc --noEmit"
   },
   "private": true
 }

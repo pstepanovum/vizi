@@ -47,19 +47,33 @@ npx expo prebuild --platform ios --clean   # after config/native changes
 npx expo run:ios
 ```
 
-## TestFlight (local, no EAS)
+## Release to TestFlight / App Store (local, no EAS)
 
-Archive, sign, and upload with one script (uses the App Store Connect API key
-from `vizi-assets/apple/`, automatic signing via Xcode):
+One command bumps the version, builds a signed Release archive, and uploads it
+to App Store Connect:
 
 ```bash
 cd vizi-mobile
-ASC_ISSUER_ID=<issuer-uuid> ./scripts/testflight-ios.sh
+npm run release          # same version, next build number
+npm run release:patch    # 1.0.0 -> 1.0.1
+npm run release:minor    # 1.0.0 -> 1.1.0
+npm run release:major    # 1.0.0 -> 2.0.0
 ```
 
-The Issuer ID is in App Store Connect → Users and Access → Integrations.
-Bump `ios.buildNumber` in `app.json` before each upload. Alternatively use
-Xcode: Product → Archive → Distribute App.
+It bumps `app.json` (iOS build number and Android versionCode stay in step),
+runs `expo prebuild`, archives with `xcodebuild`, uploads with the App Store
+Connect API key, then commits and tags the release (`v1.0.1-3`) and pushes.
+
+**One-time setup** — put your Issuer ID (App Store Connect → Users and Access →
+Integrations) in `vizi-mobile/scripts/.env.release` (gitignored):
+
+```
+ASC_ISSUER_ID=00000000-0000-0000-0000-000000000000
+```
+
+Optional overrides: `ASC_KEY_ID` (default `YJFTFN8T6L`), `ASC_KEY_PATH`,
+`SKIP_GIT=1` to skip the commit/tag/push. The script refuses to run with a
+dirty working tree so the archive always matches the tagged commit.
 
 ## Product invariants
 
