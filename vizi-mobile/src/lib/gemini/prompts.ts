@@ -16,4 +16,4 @@ Rules:
 
 // Used for the ambient auto-description loop (no user question).
 export const DESCRIBE_SCENE_PROMPT =
-  'Briefly tell me what you can see right now, in one or two short spoken sentences, as if narrating live. Prioritize people, obstacles, vehicles, signs, and anything I should know before moving. Do not mention photos or cameras.';
+  'Briefly tell me what you can see right now, in one or two short spoken sentences, as if narrating live. Prioritize people, obstacles, vehicles, signs, and anything I should know before moving. Do not mention photos or cameras. If the view is essentially the same as what you last described, reply with exactly SAME_SCENE and nothing else.';

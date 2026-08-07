@@ -30,6 +30,10 @@ const RECENT_SPEECH_WINDOW_MS = 4000;
 // turn never waits on the camera.
 const FRAME_SAMPLE_INTERVAL_MS = 2500;
 const FRAME_FRESHNESS_MS = 5000;
+// Ambient narration is skipped when the sampled JPEG size is within this
+// ratio of the last-described frame — same scene produces near-identical
+// sizes, a new scene shifts them well beyond it.
+const SCENE_CHANGE_SIZE_RATIO = 0.05;
 // The iOS recognizer throws transient errors (busy restarts, brief network
 // blips to the dictation service). Only surface "error" after this many in a
 // row — isolated ones just restart quietly.
@@ -119,6 +123,8 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const eagerEndpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingTextRef = useRef<string | null>(null);
   const lastAnswerRef = useRef<string | null>(null);
+  const narrationPausedRef = useRef(false);
+  const lastDescribedFrameSizeRef = useRef<number | null>(null);
   const recognitionRunningRef = useRef(false);
   const recognitionErrorsRef = useRef(0);
   const lastSpeechAtRef = useRef(0);
@@ -327,6 +333,10 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         // Instant "heard you" feedback while the model works.
         playAck();
       }
+      if (!ambient) {
+        // A real question re-engages the companion — resume ambient narration.
+        narrationPausedRef.current = false;
+      }
       log(`turn started (${ambient ? 'ambient description' : 'user question'}): "${question}"`);
       const turnStartedAt = Date.now();
       try {
@@ -349,11 +359,20 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
             ])
           : undefined;
         const frameBase64 = racedPending ?? sampledFresh ?? (await captureFrame());
+        if (ambient && frameBase64) {
+          lastDescribedFrameSizeRef.current = frameBase64.length;
+        }
         const answer = await askGemini({
           question,
           frameBase64,
           history: historyRef.current,
         });
+        if (ambient && answer.trim().toUpperCase().includes('SAME_SCENE')) {
+          // Model confirms nothing meaningfully changed — stay quiet.
+          log('ambient: scene unchanged (model)');
+          startListening();
+          return;
+        }
         const displayAnswer = stripAudioTags(answer);
         const newTurns: ChatTurn[] = [
           { role: 'user', text: question },
@@ -406,7 +425,8 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       // Local command intents — handled instantly, nothing sent to the model.
       const command = matchVoiceCommand(transcript);
       if (command === 'stop') {
-        log(`voice command: stop ("${transcript}")`);
+        log(`voice command: stop ("${transcript}") — pausing ambient narration`);
+        narrationPausedRef.current = true;
         stopPlayback();
         startListening();
         return;
@@ -513,8 +533,45 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   }, [status, captureFrame]);
 
   // Ambient narration loop: whenever the session is idle in "listening",
-  // schedule a scene description so the agent proactively guides the user.
+  // periodically consider describing the scene. "Consider" — it self-re-arms
+  // and skips silently when the user said stop, spoke recently, or the camera
+  // is still looking at the same thing (frame-size gate: JPEG size is a cheap
+  // stable proxy for scene content — unchanged scenes vary <2%).
   useEffect(() => {
+    const armAmbient = (delay: number) => {
+      if (describeTimerRef.current) {
+        clearTimeout(describeTimerRef.current);
+      }
+      describeTimerRef.current = setTimeout(() => {
+        describeTimerRef.current = null;
+        if (statusRef.current !== 'listening' || mutedRef.current) {
+          return;
+        }
+        if (narrationPausedRef.current) {
+          armAmbient(AUTO_DESCRIBE_INTERVAL_MS);
+          return;
+        }
+        if (Date.now() - lastSpeechAtRef.current < RECENT_SPEECH_WINDOW_MS) {
+          log('ambient deferred — user spoke recently');
+          armAmbient(RECENT_SPEECH_WINDOW_MS);
+          return;
+        }
+        const currentSize = latestFrameRef.current?.base64.length ?? null;
+        const lastSize = lastDescribedFrameSizeRef.current;
+        if (
+          currentSize !== null &&
+          lastSize !== null &&
+          Math.abs(currentSize - lastSize) / lastSize < SCENE_CHANGE_SIZE_RATIO
+        ) {
+          log('ambient skipped — scene unchanged (frame size)');
+          armAmbient(AUTO_DESCRIBE_INTERVAL_MS);
+          return;
+        }
+        hasDescribedRef.current = true;
+        runTurn(`${DESCRIBE_SCENE_PROMPT} (Device language: ${languageTag})`, { ambient: true });
+      }, delay);
+    };
+
     if (describeTimerRef.current) {
       clearTimeout(describeTimerRef.current);
       describeTimerRef.current = null;
@@ -524,26 +581,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     }
     const delay = hasDescribedRef.current ? AUTO_DESCRIBE_INTERVAL_MS : FIRST_DESCRIBE_DELAY_MS;
     log(`ambient description scheduled in ${delay}ms`);
-    describeTimerRef.current = setTimeout(() => {
-      if (statusRef.current !== 'listening' || mutedRef.current) {
-        return;
-      }
-      if (Date.now() - lastSpeechAtRef.current < RECENT_SPEECH_WINDOW_MS) {
-        log('ambient description deferred — user spoke recently');
-        // Re-arm by nudging the effect through a fresh listening cycle.
-        describeTimerRef.current = setTimeout(() => {
-          if (statusRef.current === 'listening' && !mutedRef.current) {
-            hasDescribedRef.current = true;
-            runTurn(`${DESCRIBE_SCENE_PROMPT} (Device language: ${languageTag})`, {
-              ambient: true,
-            });
-          }
-        }, RECENT_SPEECH_WINDOW_MS);
-        return;
-      }
-      hasDescribedRef.current = true;
-      runTurn(`${DESCRIBE_SCENE_PROMPT} (Device language: ${languageTag})`, { ambient: true });
-    }, delay);
+    armAmbient(delay);
     return () => {
       if (describeTimerRef.current) {
         clearTimeout(describeTimerRef.current);
