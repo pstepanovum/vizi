@@ -46,6 +46,11 @@ export async function askGemini({
     },
   };
 
+  const startedAt = Date.now();
+  console.log(
+    `[vizi:gemini] request → model=${MODEL} question="${question}" frame=${frameBase64 ? `${Math.round(frameBase64.length / 1024)}kb` : 'none'} history=${history.length} turns`,
+  );
+
   const response = await fetch(endpointUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -54,6 +59,7 @@ export async function askGemini({
 
   if (!response.ok) {
     const detail = await response.text();
+    console.warn(`[vizi:gemini] HTTP ${response.status} after ${Date.now() - startedAt}ms: ${detail.slice(0, 300)}`);
     throw new Error(`Gemini request failed (${response.status}): ${detail.slice(0, 300)}`);
   }
 
@@ -66,7 +72,9 @@ export async function askGemini({
     .trim();
 
   if (!text) {
+    console.warn('[vizi:gemini] empty answer in response');
     throw new Error('Gemini returned an empty answer');
   }
+  console.log(`[vizi:gemini] answer in ${Date.now() - startedAt}ms: "${text}"`);
   return text;
 }

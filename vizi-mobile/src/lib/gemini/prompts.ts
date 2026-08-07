@@ -9,3 +9,7 @@ Rules:
 - For text or labels: read the relevant text aloud plainly.
 - If the image is too dark, blurry, or the subject is out of frame, say so and suggest how to re-aim the camera.
 - Keep answers under four sentences unless the user asks for detail.`;
+
+// Used for the ambient auto-description loop (no user question).
+export const DESCRIBE_SCENE_PROMPT =
+  'Briefly describe what the camera sees right now, in one or two short spoken sentences. Prioritize people, obstacles, vehicles, signs, and anything a blind person should know before moving.';

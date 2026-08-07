@@ -13,6 +13,9 @@ export async function synthesizeSpeech(text: string): Promise<string> {
     throw new Error('Missing EXPO_PUBLIC_FISH_AUDIO_API_KEY');
   }
 
+  const startedAt = Date.now();
+  console.log(`[vizi:fish] tts request → model=${MODEL} chars=${text.length}`);
+
   const response = await fetch('https://api.fish.audio/v1/tts', {
     method: 'POST',
     headers: {
@@ -31,11 +34,13 @@ export async function synthesizeSpeech(text: string): Promise<string> {
 
   if (!response.ok) {
     const detail = await response.text();
+    console.warn(`[vizi:fish] HTTP ${response.status} after ${Date.now() - startedAt}ms: ${detail.slice(0, 200)}`);
     throw new Error(`Fish Audio TTS failed (${response.status}): ${detail.slice(0, 200)}`);
   }
 
   const bytes = new Uint8Array(await response.arrayBuffer());
   const file = new File(Paths.cache, `vizi-tts-${Date.now()}.mp3`);
   file.write(bytes);
+  console.log(`[vizi:fish] audio ready in ${Date.now() - startedAt}ms (${Math.round(bytes.length / 1024)}kb)`);
   return file.uri;
 }

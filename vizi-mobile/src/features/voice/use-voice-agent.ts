@@ -10,8 +10,20 @@ import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { SessionStatus } from '@/features/session/session-status';
 import { hasFishAudioKey, synthesizeSpeech } from '@/lib/fish-audio/client';
 import { askGemini, ChatTurn, hasGeminiKey } from '@/lib/gemini/client';
+import { DESCRIBE_SCENE_PROMPT } from '@/lib/gemini/prompts';
 
 const MAX_HISTORY_TURNS = 12;
+// Ambient narration: describe the scene shortly after start, then again
+// whenever the session sits idle in "listening" for this long.
+const FIRST_DESCRIBE_DELAY_MS = 1500;
+const AUTO_DESCRIBE_INTERVAL_MS = 20000;
+// Don't start an ambient description if the user spoke this recently —
+// they are probably mid-question.
+const RECENT_SPEECH_WINDOW_MS = 4000;
+
+function log(...parts: unknown[]) {
+  console.log('[vizi:agent]', ...parts);
+}
 
 type VoiceAgentOptions = {
   cameraRef: RefObject<ExpoCameraView | null>;
@@ -25,6 +37,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   const historyRef = useRef<ChatTurn[]>([]);
   const playerRef = useRef<AudioPlayer | null>(null);
+  const describeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSpeechAtRef = useRef(0);
+  const hasDescribedRef = useRef(false);
   const statusRef = useRef(status);
   const mutedRef = useRef(muted);
   statusRef.current = status;
@@ -32,21 +47,25 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
 
   const startListening = useCallback(async () => {
     if (mutedRef.current) {
+      log('startListening skipped — microphone muted');
       return;
     }
     try {
       const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!permission.granted) {
+        log('speech recognition permission denied');
         setStatus('needs_permission');
         return;
       }
       ExpoSpeechRecognitionModule.start({
         lang: 'en-US',
-        interimResults: false,
+        interimResults: true,
         continuous: false,
       });
+      log('listening started');
       setStatus('listening');
-    } catch {
+    } catch (error) {
+      log('failed to start listening:', error);
       setStatus('error');
     }
   }, []);
@@ -74,6 +93,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   }, []);
 
   const captureFrame = useCallback(async (): Promise<string | undefined> => {
+    const startedAt = Date.now();
     try {
       const photo = await cameraRef.current?.takePictureAsync({
         base64: true,
@@ -81,23 +101,32 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         skipProcessing: true,
         shutterSound: false,
       });
-      return photo?.base64 ?? undefined;
-    } catch {
+      if (photo?.base64) {
+        log(`frame captured in ${Date.now() - startedAt}ms (${Math.round(photo.base64.length / 1024)}kb)`);
+        return photo.base64;
+      }
+      log('frame capture returned no data');
+      return undefined;
+    } catch (error) {
+      log('frame capture failed:', error);
       return undefined;
     }
   }, [cameraRef]);
 
   const speakWithSystemVoice = useCallback(
     (text: string) => {
+      log('speaking with OS voice');
       Speech.speak(text, {
         language: 'en-US',
         onDone: () => {
+          log('OS voice playback finished');
           startListening();
         },
         onStopped: () => {
           startListening();
         },
-        onError: () => {
+        onError: (error) => {
+          log('OS voice playback error:', error);
           startListening();
         },
       });
@@ -117,6 +146,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           playerRef.current = player;
           player.addListener('playbackStatusUpdate', (playbackStatus) => {
             if (playbackStatus.didJustFinish && playerRef.current === player) {
+              log('Fish Audio playback finished');
               playerRef.current = null;
               player.release();
               startListening();
@@ -125,7 +155,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
           player.play();
           return;
         } catch (error) {
-          console.warn('[vizi] Fish Audio TTS failed, falling back to OS voice:', error);
+          console.warn('[vizi:agent] Fish Audio TTS failed, falling back to OS voice:', error);
         }
       }
       speakWithSystemVoice(text);
@@ -133,40 +163,50 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     [speakWithSystemVoice, startListening, stopPlayback],
   );
 
-  const handleUtterance = useCallback(
-    async (transcript: string) => {
+  const runTurn = useCallback(
+    async (question: string, { ambient = false } = {}) => {
       stopListening();
       setStatus('thinking');
+      log(`turn started (${ambient ? 'ambient description' : 'user question'}): "${question}"`);
+      const turnStartedAt = Date.now();
       try {
         const frameBase64 = await captureFrame();
         const answer = await askGemini({
-          question: transcript,
+          question,
           frameBase64,
           history: historyRef.current,
         });
         const newTurns: ChatTurn[] = [
-          { role: 'user', text: transcript },
+          { role: 'user', text: question },
           { role: 'model', text: answer },
         ];
         historyRef.current = [...historyRef.current, ...newTurns].slice(-MAX_HISTORY_TURNS);
         setLastAnswer(answer);
+        log(`turn answered in ${Date.now() - turnStartedAt}ms`);
         await speak(answer);
       } catch (error) {
-        console.warn('[vizi] voice turn failed:', error);
+        console.warn('[vizi:agent] turn failed:', error);
+        if (ambient) {
+          // Ambient narration failing should not interrupt the session loop.
+          startListening();
+          return;
+        }
         setStatus('error');
         await speak('Sorry, I could not process that. Please try again.');
       }
     },
-    [captureFrame, speak, stopListening],
+    [captureFrame, speak, startListening, stopListening],
   );
 
   useSpeechRecognitionEvent('result', (event) => {
     if (statusRef.current !== 'listening') {
       return;
     }
+    lastSpeechAtRef.current = Date.now();
     const transcript = event.results?.[0]?.transcript?.trim();
     if (event.isFinal && transcript) {
-      handleUtterance(transcript);
+      log(`heard: "${transcript}"`);
+      runTurn(transcript);
     }
   });
 
@@ -182,10 +222,49 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       startListening();
       return;
     }
+    log('speech recognition error:', event.error, event.message);
     if (statusRef.current === 'listening') {
       setStatus('error');
     }
   });
+
+  // Ambient narration loop: whenever the session is idle in "listening",
+  // schedule a scene description so the agent proactively guides the user.
+  useEffect(() => {
+    if (describeTimerRef.current) {
+      clearTimeout(describeTimerRef.current);
+      describeTimerRef.current = null;
+    }
+    if (status !== 'listening' || muted) {
+      return;
+    }
+    const delay = hasDescribedRef.current ? AUTO_DESCRIBE_INTERVAL_MS : FIRST_DESCRIBE_DELAY_MS;
+    log(`ambient description scheduled in ${delay}ms`);
+    describeTimerRef.current = setTimeout(() => {
+      if (statusRef.current !== 'listening' || mutedRef.current) {
+        return;
+      }
+      if (Date.now() - lastSpeechAtRef.current < RECENT_SPEECH_WINDOW_MS) {
+        log('ambient description deferred — user spoke recently');
+        // Re-arm by nudging the effect through a fresh listening cycle.
+        describeTimerRef.current = setTimeout(() => {
+          if (statusRef.current === 'listening' && !mutedRef.current) {
+            hasDescribedRef.current = true;
+            runTurn(DESCRIBE_SCENE_PROMPT, { ambient: true });
+          }
+        }, RECENT_SPEECH_WINDOW_MS);
+        return;
+      }
+      hasDescribedRef.current = true;
+      runTurn(DESCRIBE_SCENE_PROMPT, { ambient: true });
+    }, delay);
+    return () => {
+      if (describeTimerRef.current) {
+        clearTimeout(describeTimerRef.current);
+        describeTimerRef.current = null;
+      }
+    };
+  }, [status, muted, runTurn]);
 
   // Session bootstrap: wait for camera permission, then open the mic.
   useEffect(() => {
@@ -193,14 +272,16 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       return;
     }
     if (!cameraPermission.granted) {
+      log('camera permission not granted yet');
       setStatus('needs_permission');
       return;
     }
     if (!hasGeminiKey()) {
-      console.warn('[vizi] EXPO_PUBLIC_GEMINI_API_KEY is not set');
+      console.warn('[vizi:agent] EXPO_PUBLIC_GEMINI_API_KEY is not set');
       setStatus('error');
       return;
     }
+    log(`session starting (fish audio: ${hasFishAudioKey() ? 'enabled' : 'disabled, using OS voice'})`);
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
     startListening();
     return () => {
@@ -212,15 +293,18 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   // Mute / unmute the microphone without tearing the session down.
   useEffect(() => {
     if (muted) {
+      log('microphone muted');
       stopListening();
       return;
     }
     if (statusRef.current === 'listening' || statusRef.current === 'connecting') {
+      log('microphone unmuted');
       startListening();
     }
   }, [muted, startListening, stopListening]);
 
   const repeatLastAnswer = useCallback(() => {
+    log('repeat last answer requested');
     stopListening();
     if (!lastAnswer) {
       speak('I have not answered anything yet. Ask me a question.');
@@ -230,9 +314,11 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   }, [lastAnswer, speak, stopListening]);
 
   const reconnect = useCallback(() => {
+    log('reconnect requested — resetting session');
     stopPlayback();
     stopListening();
     historyRef.current = [];
+    hasDescribedRef.current = false;
     setStatus('connecting');
     startListening();
   }, [startListening, stopListening, stopPlayback]);
