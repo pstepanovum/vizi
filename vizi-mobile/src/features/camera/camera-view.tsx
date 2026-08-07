@@ -1,11 +1,16 @@
 import { CameraView as ExpoCameraView, useCameraPermissions } from 'expo-camera';
+import { RefObject } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { CameraFrame } from '@/components/camera-frame';
 import { RoundedButton } from '@/components/rounded-button';
 import { colors, radius, spacing, typography } from '@/theme';
 
-export function CameraView() {
+type CameraViewProps = {
+  cameraRef?: RefObject<ExpoCameraView | null>;
+};
+
+export function CameraView({ cameraRef }: CameraViewProps) {
   const [permission, requestPermission] = useCameraPermissions();
 
   if (!permission) {
@@ -25,7 +30,7 @@ export function CameraView() {
 
   return (
     <CameraFrame>
-      <ExpoCameraView style={styles.camera} facing="back" />
+      <ExpoCameraView ref={cameraRef} style={styles.camera} facing="back" animateShutter={false} />
     </CameraFrame>
   );
 }

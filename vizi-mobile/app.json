@@ -68,7 +68,8 @@
         }
       ],
       "expo-asset",
-      "./plugins/with-firebase-cocoapods.js"
+      "./plugins/with-firebase-cocoapods.js",
+      "expo-speech-recognition"
     ],
     "experiments": {
       "typedRoutes": true,

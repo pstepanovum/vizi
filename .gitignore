@@ -8,6 +8,7 @@ vizi-assets/firebase/*.zip
 **/GoogleService-Info.plist
 .env
 .env.*
+!.env.example
 
 # Fonts — licensed assets stay local
 vizi-assets/font/
