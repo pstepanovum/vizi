@@ -27,6 +27,8 @@ export type Device = {
   bezel: number;
   /** Caption type size in canvas CSS pixels. */
   captionSize: number;
+  /** Share of canvas height reserved for caption + subtitle. */
+  captionZoneRatio: number;
 };
 
 export const DEVICES: Device[] = [
@@ -44,6 +46,7 @@ export const DEVICES: Device[] = [
     island: { width: 125, height: 36, top: 11 },
     bezel: 10,
     captionSize: 54,
+    captionZoneRatio: 0.2,
   },
   {
     id: 'iphone-6.9-xl',
@@ -59,6 +62,7 @@ export const DEVICES: Device[] = [
     island: { width: 125, height: 36, top: 11 },
     bezel: 10,
     captionSize: 55,
+    captionZoneRatio: 0.2,
   },
   {
     id: 'ipad-13',
@@ -74,6 +78,7 @@ export const DEVICES: Device[] = [
     island: null,
     bezel: 14,
     captionSize: 76,
+    captionZoneRatio: 0.27,
   },
 ];
 
@@ -101,7 +106,6 @@ export type Layout = {
 };
 
 const CAPTION_TOP_RATIO = 0.05;
-const CAPTION_ZONE_RATIO = 0.185;
 const BOTTOM_PAD_RATIO = 0.03;
 const SIDE_MARGIN_RATIO = 0.086;
 
@@ -115,7 +119,7 @@ export function layoutFor(device: Device): Layout {
   const canvasH = device.height / device.exportScale;
 
   const captionTop = Math.round(canvasH * CAPTION_TOP_RATIO);
-  const captionZone = Math.round(canvasH * CAPTION_ZONE_RATIO);
+  const captionZone = Math.round(canvasH * device.captionZoneRatio);
   const bottomPad = Math.round(canvasH * BOTTOM_PAD_RATIO);
   const sideMargin = Math.round(canvasW * SIDE_MARGIN_RATIO);
 
