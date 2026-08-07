@@ -2,13 +2,31 @@ import { Platform } from 'react-native';
 
 import { VIZI_SYSTEM_PROMPT } from '@/features/companion/prompts';
 import { CompanionEvents, SessionToken, VisionCompanion } from '@/features/companion/types';
+import { normalizeJpegBase64 } from '@/lib/normalize-jpeg-base64';
 
 type GenerateContentResponse = {
   candidates?: Array<{
     content?: { parts?: Array<{ text?: string }> };
   }>;
-  error?: { message?: string };
+  error?: { message?: string; status?: string };
 };
+
+/** Live/native-audio models cannot serve generateContent; use a multimodal text model. */
+export const REST_MODEL = 'gemini-2.5-flash';
+
+export function resolveRestModel(liveModel: string): string {
+  const model = liveModel.trim();
+  if (
+    !model ||
+    model.includes('native-audio') ||
+    model.includes('live') ||
+    model.startsWith('gemini-1.5') ||
+    model.startsWith('gemini-2.0')
+  ) {
+    return REST_MODEL;
+  }
+  return model;
+}
 
 /**
  * Turn-based Gemini companion for platforms where Live WebSockets are unreliable
@@ -24,20 +42,28 @@ export function createGeminiRestCompanion(
   let ready = false;
   let abort: AbortController | null = null;
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${token.model.includes('native-audio') || token.model.includes('live') ? 'gemini-2.5-flash' : token.model}:generateContent?key=${encodeURIComponent(token.apiKey)}`;
+  const restModel = resolveRestModel(token.model);
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${restModel}:generateContent?key=${encodeURIComponent(token.apiKey)}`;
 
   return {
+    /** Exposed for UI / debugging the web fallback model. */
+    restModel,
+
     async prepare() {},
 
     async startSession() {
       events.onStatus('connecting');
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.info(`[vizi] web REST companion using model ${restModel}`);
+      }
       ready = true;
       events.onStatus('listening');
     },
 
     pushFrame(jpegBase64: string) {
-      if (jpegBase64) {
-        lastFrame = jpegBase64;
+      const normalized = normalizeJpegBase64(jpegBase64);
+      if (normalized) {
+        lastFrame = normalized;
       }
     },
 
@@ -75,7 +101,10 @@ export function createGeminiRestCompanion(
 
           const payload = (await response.json()) as GenerateContentResponse;
           if (!response.ok) {
-            throw new Error(payload.error?.message ?? `Gemini HTTP ${response.status}`);
+            throw new Error(
+              payload.error?.message ??
+                `Gemini HTTP ${response.status} (${restModel})`,
+            );
           }
 
           const reply =
@@ -97,7 +126,11 @@ export function createGeminiRestCompanion(
           if ((error as { name?: string }).name === 'AbortError') {
             return;
           }
-          events.onError(error instanceof Error ? error : new Error(String(error)));
+          const next = error instanceof Error ? error : new Error(String(error));
+          if (typeof __DEV__ !== 'undefined' && __DEV__) {
+            console.error('[vizi] REST companion error', next.message);
+          }
+          events.onError(next);
           events.onStatus('error');
         }
       })();

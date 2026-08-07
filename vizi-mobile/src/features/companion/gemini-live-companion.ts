@@ -5,6 +5,7 @@ import {
   VisionCompanion,
 } from '@/features/companion/types';
 import { bytesToBase64 } from '@/features/audio/pcm';
+import { normalizeJpegBase64 } from '@/lib/normalize-jpeg-base64';
 
 type ServerMessage = {
   setupComplete?: object;
@@ -171,14 +172,15 @@ export function createGeminiLiveCompanion(
     },
 
     pushFrame(jpegBase64: string) {
-      if (!ready || !jpegBase64) {
+      const normalized = normalizeJpegBase64(jpegBase64);
+      if (!ready || !normalized) {
         return;
       }
       send({
         realtimeInput: {
           video: {
             mimeType: 'image/jpeg',
-            data: jpegBase64,
+            data: normalized,
           },
         },
       });

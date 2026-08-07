@@ -2,27 +2,10 @@ import { Buffer } from 'buffer';
 
 /** Encode raw bytes to base64 for Gemini Live realtimeInput.audio. */
 export function bytesToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
-  // Prefer global btoa when available (Hermes / browser).
-  if (typeof btoa === 'function') {
-    return btoa(binary);
-  }
   return Buffer.from(bytes).toString('base64');
 }
 
 export function base64ToBytes(base64: string): Uint8Array {
-  if (typeof atob === 'function') {
-    const binary = atob(base64);
-    const out = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) {
-      out[i] = binary.charCodeAt(i);
-    }
-    return out;
-  }
   return new Uint8Array(Buffer.from(base64, 'base64'));
 }
 

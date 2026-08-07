@@ -14,19 +14,49 @@ export function useSessionController(cameraGranted: boolean) {
   const cameraRef = useRef<CameraView | null>(null);
   const companionRef = useRef<VisionCompanion | null>(null);
   const usesNativeAudioRef = useRef(false);
+  const heardModelAudioRef = useRef(false);
   const [status, setStatus] = useState<SessionStatus>('connecting');
   const [muted, setMuted] = useState(false);
   const [caption, setCaption] = useState<string | null>(null);
   const [mode, setMode] = useState<CompanionMode | null>(null);
   const [usesNativeAudio, setUsesNativeAudio] = useState(false);
+  const [restModel, setRestModel] = useState<string | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
+  /** Pause STT while TTS speaks — required on web browsers. */
+  const [holdingMicForTts, setHoldingMicForTts] = useState(false);
   const { speak, stop, repeatLast, remember } = useSpeechOutput();
 
   const stopPlaybackLocal = useRef<() => void>(() => undefined);
   const playModelPcmBase64Ref = useRef<(b64: string) => void>(() => undefined);
 
+  const releaseMicAfterTts = useCallback(() => {
+    setHoldingMicForTts(false);
+  }, []);
+
+  const speakReply = useCallback(
+    (text: string) => {
+      setHoldingMicForTts(true);
+      const release = () => setHoldingMicForTts(false);
+      // Fallback if the browser never fires speech onDone/onError.
+      const failsafeMs = Math.min(60000, Math.max(4000, text.trim().length * 80));
+      const failsafe = setTimeout(release, failsafeMs);
+      const wrap = (fn?: () => void) => () => {
+        clearTimeout(failsafe);
+        fn?.();
+        release();
+      };
+      speak(text, {
+        onDone: wrap(),
+        onStopped: wrap(),
+        onError: wrap(),
+      });
+    },
+    [speak],
+  );
+
   const stopEverything = useCallback(async () => {
     stop();
+    setHoldingMicForTts(false);
     stopPlaybackLocal.current();
     await companionRef.current?.stopSession();
     companionRef.current = null;
@@ -45,7 +75,10 @@ export function useSessionController(cameraGranted: boolean) {
       setStatus('connecting');
       setCaption(null);
       setUsesNativeAudio(false);
+      setRestModel(null);
+      setHoldingMicForTts(false);
       usesNativeAudioRef.current = false;
+      heardModelAudioRef.current = false;
 
       try {
         const { companion, mode: resolvedMode } = await createCompanion({
@@ -65,18 +98,23 @@ export function useSessionController(cameraGranted: boolean) {
             }
             setCaption(text);
             remember(text);
-            // Native Live plays Gemini PCM; OS TTS only for text/REST/mock paths.
-            if (!usesNativeAudioRef.current) {
-              speak(text);
+            // REST / mock: always OS TTS.
+            // Native Live: OS TTS only if no model PCM arrived this turn.
+            if (!usesNativeAudioRef.current || !heardModelAudioRef.current) {
+              speakReply(text);
             }
+            heardModelAudioRef.current = false;
           },
           onAudioChunk: (base64) => {
-            if (!cancelled) {
-              playModelPcmBase64Ref.current(base64);
+            if (cancelled) {
+              return;
             }
+            heardModelAudioRef.current = true;
+            playModelPcmBase64Ref.current(base64);
           },
           onInterrupted: () => {
             stop();
+            setHoldingMicForTts(false);
             stopPlaybackLocal.current();
           },
           onError: () => {
@@ -95,6 +133,7 @@ export function useSessionController(cameraGranted: boolean) {
           Boolean(companion.usesNativeAudio) && Platform.OS !== 'web';
         usesNativeAudioRef.current = native;
         setUsesNativeAudio(native);
+        setRestModel(companion.restModel ?? null);
         companionRef.current = companion;
         setMode(resolvedMode);
         await companion.prepare();
@@ -112,12 +151,13 @@ export function useSessionController(cameraGranted: boolean) {
       cancelled = true;
       void stopEverything();
     };
-  }, [cameraGranted, sessionKey, speak, remember, stop, stopEverything]);
+  }, [cameraGranted, sessionKey, speakReply, remember, stop, stopEverything]);
 
   useEffect(() => {
     const onChange = (next: AppStateStatus) => {
       if (next !== 'active') {
         stop();
+        setHoldingMicForTts(false);
         stopPlaybackLocal.current();
         companionRef.current?.stopPlayback();
       }
@@ -145,8 +185,9 @@ export function useSessionController(cameraGranted: boolean) {
   });
 
   // Web / REST / mock: OS speech recognition + TTS.
+  // Disable mic while TTS plays — browsers can't synthesize while recognizing.
   useSpeechInput({
-    enabled: sessionActive && !usesNativeAudio,
+    enabled: sessionActive && !usesNativeAudio && !holdingMicForTts,
     muted,
     onSpeechStart: () => {
       stop();
@@ -166,9 +207,13 @@ export function useSessionController(cameraGranted: boolean) {
   }, []);
 
   const handleRepeatLast = useCallback(() => {
-    // Always OS TTS for "repeat" — we don't buffer full model PCM turns.
-    repeatLast();
-  }, [repeatLast]);
+    setHoldingMicForTts(true);
+    repeatLast({
+      onDone: releaseMicAfterTts,
+      onStopped: releaseMicAfterTts,
+      onError: releaseMicAfterTts,
+    });
+  }, [repeatLast, releaseMicAfterTts]);
 
   return {
     cameraRef,
@@ -177,6 +222,7 @@ export function useSessionController(cameraGranted: boolean) {
     caption,
     mode,
     usesNativeAudio,
+    restModel,
     toggleMute,
     repeatLast: handleRepeatLast,
     reconnect,

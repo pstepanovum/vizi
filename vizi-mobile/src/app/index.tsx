@@ -17,8 +17,6 @@ export default function SessionScreen() {
     cameraRef,
     status,
     muted,
-    caption,
-    mode,
     toggleMute,
     repeatLast,
     reconnect,
@@ -42,23 +40,12 @@ export default function SessionScreen() {
           Vizi
         </Text>
         <SessionStatusBar status={status} muted={muted} />
-        {mode === 'mock' ? (
-          <Text style={styles.modeHint}>
-            Mock companion — set EXPO_PUBLIC_GEMINI_API_KEY for Live
-          </Text>
-        ) : null}
       </View>
 
       <LiveCameraView
         ref={cameraRef}
         onPermissionChange={setCameraGranted}
       />
-
-      {caption ? (
-        <Text accessibilityLiveRegion="polite" style={styles.caption}>
-          {caption}
-        </Text>
-      ) : null}
 
       <View style={styles.footer}>
         <RoundedButton
@@ -88,17 +75,6 @@ const styles = StyleSheet.create({
   wordmark: {
     ...typography.brand,
     color: colors.text,
-  },
-  modeHint: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
-  caption: {
-    ...typography.body,
-    color: colors.text,
-    marginTop: spacing.sm,
-    textAlign: 'center',
   },
   footer: {
     paddingTop: spacing.lg,

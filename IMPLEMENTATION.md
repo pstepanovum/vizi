@@ -21,14 +21,14 @@ Cold launch → live rear camera → listening → Gemini Live (or mock) answers
 
 ### Phase C — Gemini Live
 - [x] Token client (API key / token URL / mock)
-- [x] Firebase AI Logic Live companion (`@react-native-firebase/ai`) + WebSocket fallback + Mock
-- [x] Speech input + frames + spoken replies (`expo-speech`)
-- [x] Barge-in stops TTS on new speech
+- [x] Direct Gemini Live WebSocket (+ REST web fallback + Mock)
+- [x] Native audio I/O via Gemini Live PCM (`@speechmatics/expo-two-way-audio`); OS STT/TTS only for web/mock
+- [x] Frames + barge-in (flush playback on interrupt)
 
 ### Phase D — Harden
 - [x] Reconnect / background pause TTS
 - [x] Unit tests
-- [ ] Simulator launch verification
+- [ ] Simulator / device launch verification (native rebuild required after two-way-audio)
 
 ### Phase E — Optional
 - [ ] Server-side ephemeral tokens only
@@ -45,4 +45,12 @@ npm test
 npx expo run:ios
 ```
 
-Default companion: direct Gemini Live (`EXPO_PUBLIC_GEMINI_API_KEY`). Optional: `EXPO_PUBLIC_COMPANION=firebase`. Otherwise mock.
+Default companion: direct Gemini Live (`EXPO_PUBLIC_GEMINI_API_KEY`).
+On iOS/Android, voice goes through Gemini Live PCM (not OS STT/TTS). Web uses REST + OS speech.
+After installing `@speechmatics/expo-two-way-audio`, run a native rebuild once:
+
+```bash
+npx expo run:ios
+```
+
+Then day-to-day: `npx expo start --dev-client`.

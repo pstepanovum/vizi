@@ -18,7 +18,16 @@ cd vizi-mobile
 cp .env.example .env
 ```
 
-**Gemini Live** uses a direct API key in `.env` (`EXPO_PUBLIC_GEMINI_API_KEY`). Firebase AI Logic is optional (`EXPO_PUBLIC_COMPANION=firebase`). Without a key, the app uses a **mock companion**.
+**Gemini Live** uses a direct API key in `.env` (`EXPO_PUBLIC_GEMINI_API_KEY`).
+On **iOS/Android**, mic and spoken replies go through Gemini Live PCM (no local STT/TTS).
+**Web** keeps REST + OS speech. Without a key, the app uses a **mock companion**.
+
+Native voice needs one rebuild after `@speechmatics/expo-two-way-audio` is installed:
+
+```bash
+cd vizi-mobile
+npx expo run:ios
+```
 
 ## Repository layout
 

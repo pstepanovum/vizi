@@ -1,6 +1,8 @@
 import { CameraView } from 'expo-camera';
 import { useEffect, useRef } from 'react';
 
+import { normalizeJpegBase64 } from '@/lib/normalize-jpeg-base64';
+
 const SAMPLE_INTERVAL_MS = 1000;
 
 type Options = {
@@ -43,7 +45,10 @@ export function useFrameSampler({ enabled, cameraRef, onFrame }: Options) {
           skipProcessing: true,
         });
         if (!cancelled && photo?.base64) {
-          onFrameRef.current(photo.base64);
+          const jpegBase64 = normalizeJpegBase64(photo.base64);
+          if (jpegBase64) {
+            onFrameRef.current(jpegBase64);
+          }
         }
       } catch {
         // Simulator / denied camera often fails — companion still works via speech.

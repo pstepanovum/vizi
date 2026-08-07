@@ -25,6 +25,8 @@ export type VisionCompanion = {
   getLastReply(): string | null;
   /** When true, session should use Gemini audio I/O instead of OS STT/TTS. */
   usesNativeAudio?: boolean;
+  /** Set on web REST companion — the generateContent model id. */
+  restModel?: string;
 };
 
 export type SessionToken = {
