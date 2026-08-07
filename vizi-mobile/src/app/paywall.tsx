@@ -114,24 +114,27 @@ export default function PaywallScreen() {
             {error}
           </Text>
         )}
-        <RoundedButton
-          label={t('restorePurchases')}
-          variant="neutral"
-          onPress={async () => {
-            if (busy) {
-              return;
-            }
-            setBusy(true);
-            try {
-              await restorePurchases();
-            } catch {
-              setError(t('purchaseFailed'));
-            } finally {
-              setBusy(false);
-            }
-          }}
-        />
         <View style={styles.legalRow}>
+          <Text
+            accessibilityRole="link"
+            style={styles.legalLink}
+            onPress={async () => {
+              if (busy) {
+                return;
+              }
+              setBusy(true);
+              try {
+                await restorePurchases();
+              } catch {
+                setError(t('purchaseFailed'));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {t('restorePurchases')}
+          </Text>
+          <Text style={styles.legalDivider}>·</Text>
           <Text
             accessibilityRole="link"
             style={styles.legalLink}
