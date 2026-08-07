@@ -20,6 +20,10 @@ const AUTO_DESCRIBE_INTERVAL_MS = 12000;
 // Don't start an ambient description if the user spoke this recently —
 // they are probably mid-question.
 const RECENT_SPEECH_WINDOW_MS = 4000;
+// Continuous frame sampling while idle: a fresh frame is always ready, so a
+// turn never waits on the camera.
+const FRAME_SAMPLE_INTERVAL_MS = 2500;
+const FRAME_FRESHNESS_MS = 5000;
 
 function log(...parts: unknown[]) {
   console.log('[vizi:agent]', ...parts);
@@ -53,6 +57,7 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
   const historyRef = useRef<ChatTurn[]>([]);
   const playerRef = useRef<AudioPlayer | null>(null);
   const pendingFrameRef = useRef<Promise<string | undefined> | null>(null);
+  const latestFrameRef = useRef<{ base64: string; capturedAt: number } | null>(null);
   const describeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSpeechAtRef = useRef(0);
   const hasDescribedRef = useRef(false);
@@ -203,11 +208,17 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       log(`turn started (${ambient ? 'ambient description' : 'user question'}): "${question}"`);
       const turnStartedAt = Date.now();
       try {
-        // Use the frame pre-captured while the user was still speaking, if any —
-        // shaves the capture time off the response latency.
+        // Frame priority: one pre-captured while the user was speaking, else the
+        // continuously-sampled latest frame if fresh, else capture now. The first
+        // two make the turn start with zero camera wait.
         const pendingFrame = pendingFrameRef.current;
         pendingFrameRef.current = null;
-        const frameBase64 = (await pendingFrame) ?? (await captureFrame());
+        const sampled = latestFrameRef.current;
+        const sampledFresh =
+          sampled && Date.now() - sampled.capturedAt < FRAME_FRESHNESS_MS
+            ? sampled.base64
+            : undefined;
+        const frameBase64 = (await pendingFrame) ?? sampledFresh ?? (await captureFrame());
         const answer = await askGemini({
           question,
           frameBase64,
@@ -276,6 +287,26 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
       setStatus('error');
     }
   });
+
+  // Continuous frame sampler: while listening, keep the latest frame warm so
+  // answers never wait on the camera.
+  useEffect(() => {
+    if (status !== 'listening') {
+      return;
+    }
+    const interval = setInterval(async () => {
+      if (statusRef.current !== 'listening') {
+        return;
+      }
+      const base64 = await captureFrame();
+      if (base64) {
+        latestFrameRef.current = { base64, capturedAt: Date.now() };
+      }
+    }, FRAME_SAMPLE_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [status, captureFrame]);
 
   // Ambient narration loop: whenever the session is idle in "listening",
   // schedule a scene description so the agent proactively guides the user.
