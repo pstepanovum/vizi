@@ -16,7 +16,7 @@ const MAX_HISTORY_TURNS = 12;
 // Ambient narration: describe the scene shortly after start, then again
 // whenever the session sits idle in "listening" for this long.
 const FIRST_DESCRIBE_DELAY_MS = 1500;
-const AUTO_DESCRIBE_INTERVAL_MS = 20000;
+const AUTO_DESCRIBE_INTERVAL_MS = 12000;
 // Don't start an ambient description if the user spoke this recently —
 // they are probably mid-question.
 const RECENT_SPEECH_WINDOW_MS = 4000;
@@ -61,6 +61,13 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
         lang: 'en-US',
         interimResults: true,
         continuous: false,
+        // Keep output on the loudspeaker while the mic session is active —
+        // without defaultToSpeaker, iOS routes playback to the earpiece.
+        iosCategory: {
+          category: 'playAndRecord',
+          categoryOptions: ['defaultToSpeaker', 'allowBluetooth'],
+          mode: 'default',
+        },
       });
       log('listening started');
       setStatus('listening');
@@ -139,6 +146,9 @@ export function useVoiceAgent({ cameraRef, muted }: VoiceAgentOptions) {
     async (text: string) => {
       stopPlayback();
       setStatus('speaking');
+      // Recognition has stopped by now; switch the session to pure playback so
+      // iOS uses the loudspeaker at full volume.
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).catch(() => {});
       if (hasFishAudioKey()) {
         try {
           const uri = await synthesizeSpeech(text);
