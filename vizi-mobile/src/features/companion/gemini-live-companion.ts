@@ -4,6 +4,7 @@ import {
   SessionToken,
   VisionCompanion,
 } from '@/features/companion/types';
+import { bytesToBase64 } from '@/features/audio/pcm';
 
 type ServerMessage = {
   setupComplete?: object;
@@ -11,11 +12,14 @@ type ServerMessage = {
     interrupted?: boolean;
     turnComplete?: boolean;
     outputTranscription?: { text?: string };
+    inputTranscription?: { text?: string };
     modelTurn?: {
       parts?: Array<{ text?: string; inlineData?: { data?: string; mimeType?: string } }>;
     };
   };
 };
+
+const MIC_MIME = 'audio/pcm;rate=16000';
 
 export function createGeminiLiveCompanion(
   token: SessionToken,
@@ -34,6 +38,8 @@ export function createGeminiLiveCompanion(
   };
 
   return {
+    usesNativeAudio: true,
+
     async prepare() {
       // Token already minted by caller.
     },
@@ -96,6 +102,7 @@ export function createGeminiLiveCompanion(
             }
 
             if (content.interrupted) {
+              events.onInterrupted?.();
               events.onStatus('listening');
               return;
             }
@@ -105,6 +112,15 @@ export function createGeminiLiveCompanion(
               transcriptBuffer += chunk;
               events.onStatus('speaking');
               events.onPartialReply?.(transcriptBuffer);
+            }
+
+            for (const part of content.modelTurn?.parts ?? []) {
+              const mime = part.inlineData?.mimeType ?? '';
+              const data = part.inlineData?.data;
+              if (data && mime.includes('audio')) {
+                events.onStatus('speaking');
+                events.onAudioChunk?.(data, mime);
+              }
             }
 
             const textParts = content.modelTurn?.parts
@@ -168,6 +184,20 @@ export function createGeminiLiveCompanion(
       });
     },
 
+    pushAudio(pcm: Uint8Array, mimeType = MIC_MIME) {
+      if (!ready || !pcm.length) {
+        return;
+      }
+      send({
+        realtimeInput: {
+          audio: {
+            mimeType,
+            data: bytesToBase64(pcm),
+          },
+        },
+      });
+    },
+
     submitUtterance(text: string) {
       const trimmed = text.trim();
       if (!ready || !trimmed) {
@@ -188,8 +218,8 @@ export function createGeminiLiveCompanion(
     },
 
     stopPlayback() {
-      // Barge-in: mark listening; audio queue is flushed by the session hook.
       if (ready) {
+        events.onInterrupted?.();
         events.onStatus('listening');
       }
     },

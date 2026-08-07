@@ -12,6 +12,8 @@
     "@react-native-firebase/auth": "^26.1.0",
     "@react-native-firebase/firestore": "^26.1.0",
     "@react-native-google-signin/google-signin": "^16.1.4",
+    "@speechmatics/expo-two-way-audio": "^0.1.2",
+    "buffer": "^6.0.3",
     "expo": "~57.0.11",
     "expo-asset": "~57.0.9",
     "expo-audio": "~57.0.3",

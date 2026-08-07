@@ -4,6 +4,13 @@ import { useCallback, useRef } from 'react';
 export function useSpeechOutput() {
   const lastReplyRef = useRef<string | null>(null);
 
+  const remember = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (trimmed) {
+      lastReplyRef.current = trimmed;
+    }
+  }, []);
+
   const speak = useCallback((text: string) => {
     const trimmed = text.trim();
     if (!trimmed) {
@@ -27,5 +34,11 @@ export function useSpeechOutput() {
     }
   }, [speak]);
 
-  return { speak, stop, repeatLast, getLastReply: () => lastReplyRef.current };
+  return {
+    speak,
+    stop,
+    remember,
+    repeatLast,
+    getLastReply: () => lastReplyRef.current,
+  };
 }
