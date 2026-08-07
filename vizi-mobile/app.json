@@ -71,7 +71,13 @@
       "expo-asset",
       "./plugins/with-firebase-cocoapods.js",
       "expo-speech-recognition",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.463129827015-6fdbn1ooq15rccnlnvhn4d5rrdiku24m"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

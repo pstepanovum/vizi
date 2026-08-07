@@ -23,13 +23,12 @@ export type AuthUser = User;
 let googleConfigured = false;
 
 function ensureGoogleConfigured() {
-  if (!GOOGLE_WEB_CLIENT_ID) {
-    throw new Error(
-      'Google Sign-In is not configured — set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in .env',
-    );
-  }
   if (!googleConfigured) {
-    GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+    // Without a webClientId, iOS issues the ID token against the iOS OAuth
+    // client (from GoogleService-Info.plist) — Firebase accepts tokens from
+    // any OAuth client of the project. Set the web client id in .env when
+    // Android support or server-side verification is needed.
+    GoogleSignin.configure(GOOGLE_WEB_CLIENT_ID ? { webClientId: GOOGLE_WEB_CLIENT_ID } : {});
     googleConfigured = true;
   }
 }
