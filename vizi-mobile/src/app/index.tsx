@@ -15,6 +15,7 @@ import { statusAnnouncement } from '@/features/session/session-status';
 import { useVoiceAgent } from '@/features/voice/use-voice-agent';
 import { useAuthUser } from '@/lib/auth';
 import { identifyPurchaser } from '@/lib/purchases';
+import { useSettings } from '@/lib/settings';
 import { t } from '@/lib/i18n';
 import { colors, spacing, typography } from '@/theme';
 
@@ -22,6 +23,7 @@ import { colors, spacing, typography } from '@/theme';
 // Google, or guest). Split from SessionScreen so hooks stay unconditional.
 export default function IndexScreen() {
   const user = useAuthUser();
+  const settings = useSettings();
 
   // Keep the RevenueCat purchaser identity in sync with the Firebase account.
   useEffect(() => {
@@ -30,6 +32,10 @@ export default function IndexScreen() {
     }
   }, [user]);
 
+  if (!settings.onboarded) {
+    // Fresh install — show the welcome slideshow before anything else.
+    return <Redirect href={'/welcome' as Href} />;
+  }
   if (user === undefined) {
     return <Screen />;
   }

@@ -11,6 +11,8 @@ export type AppSettings = {
   // UI language: 'auto' follows the device language, otherwise a language
   // code like 'es'.
   language: string;
+  // Whether the welcome slideshow has been completed (or skipped).
+  onboarded: boolean;
 };
 
 const DEFAULTS: AppSettings = {
@@ -19,6 +21,7 @@ const DEFAULTS: AppSettings = {
   largeText: false,
   highContrast: false,
   language: 'auto',
+  onboarded: false,
 };
 
 let current: AppSettings = { ...DEFAULTS };

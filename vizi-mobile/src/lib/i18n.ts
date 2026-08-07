@@ -72,6 +72,15 @@ type Strings = {
   termsOfUse: string;
   sectionLanguage: string;
   languageAuto: string;
+  welcomeTitle1: string;
+  welcomeBody1: string;
+  welcomeTitle2: string;
+  welcomeBody2: string;
+  welcomeTitle3: string;
+  welcomeBody3: string;
+  welcomeNext: string;
+  welcomeStart: string;
+  welcomeSkip: string;
 };
 
 const en: Strings = {
@@ -139,6 +148,15 @@ const en: Strings = {
   termsOfUse: 'Terms of Use',
   sectionLanguage: 'Language',
   languageAuto: 'Automatic',
+  welcomeTitle1: 'Meet Vizi',
+  welcomeBody1: 'Your AI vision companion — a second pair of eyes that speaks.',
+  welcomeTitle2: 'Point and ask',
+  welcomeBody2: 'Aim the camera and ask anything: what is ahead, what color, what does it say.',
+  welcomeTitle3: 'Always listening',
+  welcomeBody3: 'Interrupt anytime. Say stop to pause. Vizi speaks your language.',
+  welcomeNext: 'Next',
+  welcomeStart: 'Get started',
+  welcomeSkip: 'Skip',
 };
 
 const translations: Record<string, Strings> = {
@@ -208,6 +226,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'Términos de uso',
     sectionLanguage: 'Idioma',
     languageAuto: 'Automático',
+    welcomeTitle1: 'Conoce a Vizi',
+    welcomeBody1: 'Tu compañero de visión con IA: un segundo par de ojos que habla.',
+    welcomeTitle2: 'Apunta y pregunta',
+    welcomeBody2: 'Apunta la cámara y pregunta lo que quieras: qué hay delante, de qué color es, qué dice.',
+    welcomeTitle3: 'Siempre escuchando',
+    welcomeBody3: 'Interrumpe cuando quieras. Di «para» para pausar. Vizi habla tu idioma.',
+    welcomeNext: 'Siguiente',
+    welcomeStart: 'Comenzar',
+    welcomeSkip: 'Omitir',
   },
   fr: {
     statusNeedsPermission: 'Accès à la caméra requis',
@@ -274,6 +301,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'Conditions d’utilisation',
     sectionLanguage: 'Langue',
     languageAuto: 'Automatique',
+    welcomeTitle1: 'Voici Vizi',
+    welcomeBody1: 'Votre compagnon de vision IA — une seconde paire d’yeux qui parle.',
+    welcomeTitle2: 'Pointez et demandez',
+    welcomeBody2: 'Visez avec la caméra et demandez ce que vous voulez : qu’y a-t-il devant, de quelle couleur, que dit ce texte.',
+    welcomeTitle3: 'Toujours à l’écoute',
+    welcomeBody3: 'Interrompez à tout moment. Dites « stop » pour mettre en pause. Vizi parle votre langue.',
+    welcomeNext: 'Suivant',
+    welcomeStart: 'Commencer',
+    welcomeSkip: 'Passer',
   },
   de: {
     statusNeedsPermission: 'Kamerazugriff erforderlich',
@@ -340,6 +376,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'Nutzungsbedingungen',
     sectionLanguage: 'Sprache',
     languageAuto: 'Automatisch',
+    welcomeTitle1: 'Lerne Vizi kennen',
+    welcomeBody1: 'Dein KI-Sehbegleiter — ein zweites Paar Augen, das spricht.',
+    welcomeTitle2: 'Zeigen und fragen',
+    welcomeBody2: 'Richte die Kamera aus und frag alles: Was ist vor mir, welche Farbe, was steht da.',
+    welcomeTitle3: 'Hört immer zu',
+    welcomeBody3: 'Unterbrich jederzeit. Sag Stopp zum Pausieren. Vizi spricht deine Sprache.',
+    welcomeNext: 'Weiter',
+    welcomeStart: 'Los geht’s',
+    welcomeSkip: 'Überspringen',
   },
   it: {
     statusNeedsPermission: 'Accesso alla fotocamera necessario',
@@ -406,6 +451,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'Termini di utilizzo',
     sectionLanguage: 'Lingua',
     languageAuto: 'Automatica',
+    welcomeTitle1: 'Ecco Vizi',
+    welcomeBody1: 'Il tuo compagno di visione con IA: un secondo paio di occhi che parla.',
+    welcomeTitle2: 'Inquadra e chiedi',
+    welcomeBody2: 'Punta la fotocamera e chiedi qualsiasi cosa: cosa c’è davanti, di che colore è, cosa c’è scritto.',
+    welcomeTitle3: 'Sempre in ascolto',
+    welcomeBody3: 'Interrompi quando vuoi. Di’ «stop» per mettere in pausa. Vizi parla la tua lingua.',
+    welcomeNext: 'Avanti',
+    welcomeStart: 'Inizia',
+    welcomeSkip: 'Salta',
   },
   pt: {
     statusNeedsPermission: 'Acesso à câmera necessário',
@@ -472,6 +526,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'Termos de uso',
     sectionLanguage: 'Idioma',
     languageAuto: 'Automático',
+    welcomeTitle1: 'Conheça a Vizi',
+    welcomeBody1: 'Sua companheira de visão com IA — um segundo par de olhos que fala.',
+    welcomeTitle2: 'Aponte e pergunte',
+    welcomeBody2: 'Aponte a câmera e pergunte qualquer coisa: o que há à frente, qual é a cor, o que está escrito.',
+    welcomeTitle3: 'Sempre ouvindo',
+    welcomeBody3: 'Interrompa a qualquer momento. Diga «pare» para pausar. A Vizi fala o seu idioma.',
+    welcomeNext: 'Avançar',
+    welcomeStart: 'Começar',
+    welcomeSkip: 'Pular',
   },
   ru: {
     statusNeedsPermission: 'Нужен доступ к камере',
@@ -538,6 +601,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'Условия использования',
     sectionLanguage: 'Язык',
     languageAuto: 'Автоматически',
+    welcomeTitle1: 'Знакомьтесь: Vizi',
+    welcomeBody1: 'Ваш ИИ-помощник для зрения — вторая пара глаз, которая говорит.',
+    welcomeTitle2: 'Наведите и спросите',
+    welcomeBody2: 'Наведите камеру и спросите что угодно: что впереди, какого это цвета, что здесь написано.',
+    welcomeTitle3: 'Всегда слушает',
+    welcomeBody3: 'Перебивайте в любой момент. Скажите «стоп», чтобы остановить. Vizi говорит на вашем языке.',
+    welcomeNext: 'Далее',
+    welcomeStart: 'Начать',
+    welcomeSkip: 'Пропустить',
   },
   uk: {
     statusNeedsPermission: 'Потрібен доступ до камери',
@@ -604,6 +676,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'Умови використання',
     sectionLanguage: 'Мова',
     languageAuto: 'Автоматично',
+    welcomeTitle1: 'Знайомтеся: Vizi',
+    welcomeBody1: 'Ваш ШІ-помічник для зору — друга пара очей, яка говорить.',
+    welcomeTitle2: 'Наведіть і запитайте',
+    welcomeBody2: 'Наведіть камеру й запитайте будь-що: що попереду, якого це кольору, що тут написано.',
+    welcomeTitle3: 'Завжди слухає',
+    welcomeBody3: 'Перебивайте будь-коли. Скажіть «стоп», щоб зупинити. Vizi говорить вашою мовою.',
+    welcomeNext: 'Далі',
+    welcomeStart: 'Почати',
+    welcomeSkip: 'Пропустити',
   },
   zh: {
     statusNeedsPermission: '需要相机权限',
@@ -670,6 +751,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: '使用条款',
     sectionLanguage: '语言',
     languageAuto: '自动',
+    welcomeTitle1: '认识 Vizi',
+    welcomeBody1: '你的 AI 视觉伙伴——一双会说话的眼睛。',
+    welcomeTitle2: '对准并提问',
+    welcomeBody2: '对准相机，想问什么就问什么：前面是什么、是什么颜色、上面写了什么。',
+    welcomeTitle3: '随时倾听',
+    welcomeBody3: '随时可以打断。说“停”即可暂停。Vizi 会说你的语言。',
+    welcomeNext: '下一步',
+    welcomeStart: '开始使用',
+    welcomeSkip: '跳过',
   },
   ja: {
     statusNeedsPermission: 'カメラへのアクセスが必要です',
@@ -736,6 +826,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: '利用規約',
     sectionLanguage: '言語',
     languageAuto: '自動',
+    welcomeTitle1: 'Viziのご紹介',
+    welcomeBody1: 'あなたのAIビジョンパートナー。声で伝える、もう一つの目です。',
+    welcomeTitle2: '向けて、聞くだけ',
+    welcomeBody2: 'カメラを向けて何でも質問できます。前に何がある？何色？何と書いてある？',
+    welcomeTitle3: 'いつでも聞いています',
+    welcomeBody3: 'いつでも割り込めます。「ストップ」と言えば一時停止。Viziはあなたの言語で話します。',
+    welcomeNext: '次へ',
+    welcomeStart: 'はじめる',
+    welcomeSkip: 'スキップ',
   },
   ko: {
     statusNeedsPermission: '카메라 접근 권한 필요',
@@ -802,6 +901,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: '이용약관',
     sectionLanguage: '언어',
     languageAuto: '자동',
+    welcomeTitle1: 'Vizi를 만나보세요',
+    welcomeBody1: '당신의 AI 시각 도우미 — 말하는 두 번째 눈이에요.',
+    welcomeTitle2: '가리키고 물어보세요',
+    welcomeBody2: '카메라를 향하고 무엇이든 물어보세요. 앞에 뭐가 있는지, 무슨 색인지, 뭐라고 쓰여 있는지.',
+    welcomeTitle3: '항상 듣고 있어요',
+    welcomeBody3: '언제든 끼어들 수 있어요. 멈추려면 “정지”라고 말하세요. Vizi는 당신의 언어로 말해요.',
+    welcomeNext: '다음',
+    welcomeStart: '시작하기',
+    welcomeSkip: '건너뛰기',
   },
   ar: {
     statusNeedsPermission: 'مطلوب إذن الكاميرا',
@@ -868,6 +976,15 @@ const translations: Record<string, Strings> = {
     termsOfUse: 'شروط الاستخدام',
     sectionLanguage: 'اللغة',
     languageAuto: 'تلقائي',
+    welcomeTitle1: 'تعرّف على فيزي',
+    welcomeBody1: 'رفيقك البصري بالذكاء الاصطناعي — زوج ثانٍ من العيون يتكلم.',
+    welcomeTitle2: 'وجّه واسأل',
+    welcomeBody2: 'وجّه الكاميرا واسأل عن أي شيء: ما الذي أمامي، ما اللون، ماذا هو مكتوب.',
+    welcomeTitle3: 'يستمع دائمًا',
+    welcomeBody3: 'قاطعه في أي وقت. قل «توقف» للإيقاف المؤقت. فيزي يتحدث لغتك.',
+    welcomeNext: 'التالي',
+    welcomeStart: 'ابدأ',
+    welcomeSkip: 'تخطّي',
   },
 };
 
