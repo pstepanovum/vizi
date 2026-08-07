@@ -17,7 +17,7 @@ import {
   restorePurchases,
   useCustomerInfo,
 } from '@/lib/purchases';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 const PRIVACY_POLICY_URL =
   'https://github.com/pstepanovum/vizi/blob/main/vizi-assets/docs/PRIVACY.md';
@@ -189,11 +189,9 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   benefits: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.overlay,
-    padding: spacing.md,
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
   benefitRow: {
     flexDirection: 'row',
