@@ -40,13 +40,13 @@ npx expo start
 > cp vizi-assets/font/chunk-font/Chunk.otf vizi-mobile/assets/fonts/chunk.otf
 > ```
 
-For device/simulator with native modules:
+For device/simulator with native modules (iOS only — Android is out of scope
+for the MVP, so always pass `--platform ios` to prebuild):
 
 ```bash
 cd vizi-mobile
+npx expo prebuild --platform ios --clean   # after config/native changes
 npx expo run:ios
-# or
-npx expo run:android
 ```
 
 ## TestFlight (local, no EAS)
