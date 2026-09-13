@@ -52,6 +52,7 @@ type Strings = {
   packageYearly: string;
   packageLifetime: string;
   restorePurchases: string;
+  subscriptionTerms: string;
   manageSubscription: string;
   sectionPreferences: string;
   toggleHaptics: string;
@@ -131,6 +132,8 @@ const en: Strings = {
   packageYearly: 'Yearly',
   packageLifetime: 'Lifetime',
   restorePurchases: 'Restore purchases',
+  subscriptionTerms:
+    "Monthly and yearly plans renew automatically at the same price until you cancel. Payment is charged to your Apple Account when you confirm, and each renewal is charged within 24 hours before the period ends. Cancel at least 24 hours before then in your App Store account settings. Lifetime is a one-time purchase.",
   manageSubscription: 'Manage subscription',
   sectionPreferences: 'Preferences',
   toggleHaptics: 'Haptic feedback',
@@ -212,6 +215,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'Anual',
     packageLifetime: 'De por vida',
     restorePurchases: 'Restaurar compras',
+    subscriptionTerms:
+      "Los planes mensual y anual se renuevan automáticamente al mismo precio hasta que los canceles. El pago se cobra en tu cuenta de Apple al confirmar, y cada renovación se cobra dentro de las 24 horas previas al fin del periodo. Cancela al menos 24 horas antes desde los ajustes de tu cuenta de App Store. De por vida es un pago único.",
     manageSubscription: 'Gestionar suscripción',
     sectionPreferences: 'Preferencias',
     toggleHaptics: 'Respuesta háptica',
@@ -290,6 +295,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'Annuel',
     packageLifetime: 'À vie',
     restorePurchases: 'Restaurer les achats',
+    subscriptionTerms:
+      "Les formules mensuelle et annuelle se renouvellent automatiquement au même prix jusqu'à leur résiliation. Le paiement est débité de votre compte Apple à la confirmation, et chaque renouvellement est facturé dans les 24 heures précédant la fin de la période. Résiliez au moins 24 heures avant dans les réglages de votre compte App Store. L'offre à vie est un achat unique.",
     manageSubscription: 'Gérer l’abonnement',
     sectionPreferences: 'Préférences',
     toggleHaptics: 'Retour haptique',
@@ -368,6 +375,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'Jährlich',
     packageLifetime: 'Lebenslang',
     restorePurchases: 'Käufe wiederherstellen',
+    subscriptionTerms:
+      "Monats- und Jahrespläne verlängern sich automatisch zum gleichen Preis, bis du kündigst. Die Zahlung wird bei Bestätigung deinem Apple Account belastet, jede Verlängerung innerhalb von 24 Stunden vor Ende des Zeitraums. Kündige mindestens 24 Stunden vorher in den Einstellungen deines App Store-Accounts. Lebenslang ist ein einmaliger Kauf.",
     manageSubscription: 'Abo verwalten',
     sectionPreferences: 'Einstellungen',
     toggleHaptics: 'Haptisches Feedback',
@@ -446,6 +455,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'Annuale',
     packageLifetime: 'A vita',
     restorePurchases: 'Ripristina acquisti',
+    subscriptionTerms:
+      "I piani mensile e annuale si rinnovano automaticamente allo stesso prezzo finché non li annulli. Il pagamento viene addebitato sul tuo Apple Account alla conferma e ogni rinnovo viene addebitato entro 24 ore prima della fine del periodo. Annulla almeno 24 ore prima nelle impostazioni del tuo account App Store. A vita è un acquisto una tantum.",
     manageSubscription: 'Gestisci abbonamento',
     sectionPreferences: 'Preferenze',
     toggleHaptics: 'Feedback aptico',
@@ -524,6 +535,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'Anual',
     packageLifetime: 'Vitalício',
     restorePurchases: 'Restaurar compras',
+    subscriptionTerms:
+      "Os planos mensal e anual são renovados automaticamente pelo mesmo preço até que você cancele. O pagamento é cobrado na sua Conta Apple ao confirmar, e cada renovação é cobrada nas 24 horas antes do fim do período. Cancele pelo menos 24 horas antes nos ajustes da sua conta da App Store. Vitalício é uma compra única.",
     manageSubscription: 'Gerenciar assinatura',
     sectionPreferences: 'Preferências',
     toggleHaptics: 'Resposta tátil',
@@ -602,6 +615,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'Ежегодно',
     packageLifetime: 'Навсегда',
     restorePurchases: 'Восстановить покупки',
+    subscriptionTerms:
+      "Месячный и годовой планы продлеваются автоматически по той же цене, пока вы их не отмените. Оплата списывается с вашего Apple Account при подтверждении, а каждое продление — в течение 24 часов до окончания периода. Отмените не позднее чем за 24 часа в настройках учётной записи App Store. Пожизненный доступ — разовая покупка.",
     manageSubscription: 'Управлять подпиской',
     sectionPreferences: 'Настройки',
     toggleHaptics: 'Тактильный отклик',
@@ -680,6 +695,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'Щороку',
     packageLifetime: 'Назавжди',
     restorePurchases: 'Відновити покупки',
+    subscriptionTerms:
+      "Місячний і річний плани поновлюються автоматично за тією ж ціною, доки ви їх не скасуєте. Оплата списується з вашого Apple Account під час підтвердження, а кожне поновлення — протягом 24 годин до завершення періоду. Скасуйте щонайменше за 24 години в налаштуваннях облікового запису App Store. Довічний доступ — одноразова покупка.",
     manageSubscription: 'Керувати підпискою',
     sectionPreferences: 'Налаштування',
     toggleHaptics: 'Тактильний відгук',
@@ -758,6 +775,8 @@ const translations: Record<string, Strings> = {
     packageYearly: '按年',
     packageLifetime: '终身',
     restorePurchases: '恢复购买',
+    subscriptionTerms:
+      "月度和年度方案会以相同价格自动续订，直到你取消。确认购买时将从你的 Apple 账户扣款，每次续订会在当前周期结束前 24 小时内扣款。请至少提前 24 小时在 App Store 账户设置中取消。终身版为一次性购买。",
     manageSubscription: '管理订阅',
     sectionPreferences: '偏好设置',
     toggleHaptics: '触觉反馈',
@@ -836,6 +855,8 @@ const translations: Record<string, Strings> = {
     packageYearly: '年額',
     packageLifetime: '買い切り',
     restorePurchases: '購入を復元',
+    subscriptionTerms:
+      "月額プランと年額プランは、解約するまで同じ価格で自動更新されます。購入の確定時に Apple アカウントに請求され、各更新は期間終了前の 24 時間以内に請求されます。解約は期間終了の 24 時間以上前に App Store のアカウント設定で行ってください。買い切りプランは一回限りの購入です。",
     manageSubscription: 'サブスクリプションを管理',
     sectionPreferences: '設定',
     toggleHaptics: '触覚フィードバック',
@@ -914,6 +935,8 @@ const translations: Record<string, Strings> = {
     packageYearly: '연간',
     packageLifetime: '평생',
     restorePurchases: '구매 복원',
+    subscriptionTerms:
+      "월간 및 연간 플랜은 취소할 때까지 같은 가격으로 자동 갱신됩니다. 결제는 확인 시 Apple 계정으로 청구되며, 각 갱신은 기간 종료 전 24시간 이내에 청구됩니다. 기간 종료 최소 24시간 전에 App Store 계정 설정에서 취소하세요. 평생 이용권은 일회성 구매입니다.",
     manageSubscription: '구독 관리',
     sectionPreferences: '환경설정',
     toggleHaptics: '햅틱 피드백',
@@ -992,6 +1015,8 @@ const translations: Record<string, Strings> = {
     packageYearly: 'سنوي',
     packageLifetime: 'مدى الحياة',
     restorePurchases: 'استعادة المشتريات',
+    subscriptionTerms:
+      "تتجدد الخطتان الشهرية والسنوية تلقائيًا بالسعر نفسه حتى تلغيهما. يُخصم المبلغ من حساب Apple عند التأكيد، ويُخصم كل تجديد خلال 24 ساعة قبل نهاية الفترة. ألغِ الاشتراك قبل 24 ساعة على الأقل من إعدادات حسابك في App Store. خطة مدى الحياة عملية شراء لمرة واحدة.",
     manageSubscription: 'إدارة الاشتراك',
     sectionPreferences: 'التفضيلات',
     toggleHaptics: 'الاستجابة اللمسية',

@@ -139,6 +139,11 @@ export default function PaywallScreen() {
         ) : (
           <Text style={styles.caption}>{t('offeringsUnavailable')}</Text>
         )}
+        {packages.length > 0 && (
+          <Text accessibilityRole="text" style={styles.caption}>
+            {t('subscriptionTerms')}
+          </Text>
+        )}
         {error && (
           <Text accessibilityRole="text" style={styles.caption} accessibilityLiveRegion="assertive">
             {error}
